@@ -10,48 +10,89 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-
-############
-
-print("Creating GMM RV pdf and plotting")		
-
-componentList = [(1/3, 0, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
-gmmRV = tvp.GaussianMixtureModel(componentList)
-
-x = np.arange(-7, 7, .1)
-pdfPlot = plt.plot(x, gmmRV.pdf(x), label='GMM pdf')
+from matplotlib import animation
 
 
 ############
 
-print("Generating samples")
+#fig = plt.figure()
 
-t0 = time.time()
+#print("Creating GMM RV pdf and plotting")		
 
-numSamples = 1050
-samples = gmmRV.rvs(size=numSamples)
+#componentParamList = [(1/3, 0, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
+#gmmRV = tvp.GaussianMixtureModel(componentParamList)
 
-t1 = time.time()
-timeElapsed = t1-t0
+##newParamList = [(1/3, 4, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
+##gmmRV.setModelParams(newParamList)
 
-print("Time taken to generate samples = %.2f secs" % (timeElapsed))
-
-
-############
-
-#print("Plotting samples")
-#plt.scatter(samples, np.zeros(numSamples))
+#x = np.arange(-7, 7, .1)
+#pdfPlot = plt.plot(x, gmmRV.pdf(x), label='GMM pdf')
 
 
-print("Plotting histogram")
-histPlot = plt.hist(samples, normed=True, histtype='stepfilled', alpha=0.2, label='Histogram')
+#############
+
+#print("Generating samples")
+
+#t0 = time.time()
+
+#numSamples = 1050
+#samples = gmmRV.rvs(size=numSamples)
+
+#t1 = time.time()
+#timeElapsed = t1-t0
+
+#print("Time taken to generate samples = %.2f secs" % (timeElapsed))
 
 
-plt.legend(loc='upper right')
-plt.xlabel('x')
-plt.show()
+#############
+
+
+
+##print("Plotting samples")
+##plt.scatter(samples, np.zeros(numSamples))
+
+
+#print("Plotting histogram")
+#histPlot = plt.hist(samples, normed=True, histtype='stepfilled', alpha=0.2, label='Histogram')
+
+
+#plt.legend(loc='upper right')
+#plt.xlabel('x')
+#plt.show()
+
+###########
+
+
+#print("Done")
+
 
 ##########
 
+# time varying
 
-print("Done")
+fig = plt.figure()
+
+ax = plt.axes(xlim=(-10, 10), ylim=(0, 0.5))
+curve, = ax.plot([], [], lw=2)
+
+x = np.linspace(-10, 10, 1000)
+
+
+componentParamList = [(1/3, 0, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
+tvGMM = tvp.TimeVaryingGMM(componentParamList)
+
+
+def updateAndGetCurrentCurve(t):
+	print("\t t=%d" % t)
+	tvGMM.updateNextTimestep()
+	print(tvGMM)
+
+	y = tvGMM.getCurrentPDFCurve(x)
+	
+	curve.set_data(x, y)
+
+	return curve,
+
+anim = animation.FuncAnimation(fig=fig, func=updateAndGetCurrentCurve, frames=100, interval=100, blit=True)
+
+plt.show()

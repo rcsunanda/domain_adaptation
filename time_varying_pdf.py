@@ -23,7 +23,14 @@ class GaussianMixtureModel(st.rv_continuous):
 			self.std = std
 			
 			self.RV = st.norm(loc=mean, scale=std)
-		
+
+		def setParams(self, weight, mean, std):
+			self.weight = weight
+			self.mean = mean
+			self.std = std
+
+			self.RV = st.norm(loc=mean, scale=std)	# for now create new Gaussian, but this should be changed to proper setters
+
 		def __repr__(self):
 			return "Component(weight=%.2f, mean=%.2f, std=%.2f)" % (self.weight, self.mean, self.std)
 	
@@ -35,7 +42,17 @@ class GaussianMixtureModel(st.rv_continuous):
 		Comp = GaussianMixtureModel.Component
 		self.componentList = [Comp(t[0], t[1], t[2]) for t in componentParamList]
 		print(self.componentList)
+
+	def __repr__(self):
+		return "GMM --> %s" % self.componentList
+
+
+	def setModelParams(self, componentParamList):
+		for i in range(len(self.componentList)):
+			params = componentParamList[i]
+			self.componentList[i].setParams(params[0], params[1], params[2])
 	
+		#print(self.componentList)
 	
 	def _pdf(self, x):
 		pdfVal = 0
@@ -89,3 +106,38 @@ class GaussianMixtureModel(st.rv_continuous):
 		
 		return returnSamples
 		
+
+class TimeVaryingGMM:
+
+	#class ComponentParams:
+	#	def __init__(self, weight, mean, std):
+	#		self.weight = weight
+	#		self.mean = mean
+	#		self.std = std
+	
+	def __init__(self, componentParamList):
+		self.gmm = GaussianMixtureModel(componentParamList)
+		self.currentTime = 0
+
+		#self.componentPramList = [ComponentParams(t[0], t[1], t[2]) for t in componentParamList]
+
+	
+	def __repr__(self):
+		return "TimeVaryingGMM --> %s" % self.gmm
+	
+	
+	def updateNextTimestep(self):
+		self.currentTime += 1
+		componentParamList = []
+		
+		for component in self.gmm.componentList:
+			#newWeight = component.weight + 0.1
+			newMean = component.mean + 0.01
+			newStd = component.std + 0.01
+			componentParamList.append((component.weight, newMean, newStd))
+
+		self.gmm.setModelParams(componentParamList)
+	
+	
+	def getCurrentPDFCurve(self, x):
+		return self.gmm.pdf(x)
