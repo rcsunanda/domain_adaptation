@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import matplotlib.animation as anim
-
+import copy
 
 
 """
@@ -40,16 +40,13 @@ def test_gmm():
 
 	print("Time taken to generate samples = %.2f secs" % (timeElapsed))
 
-
 	############
 
 	#print("Plotting samples")
 	#plt.scatter(samples, np.zeros(numSamples))
 
-
 	print("Plotting histogram")
 	histPlot = plt.hist(samples, normed=True, histtype='stepfilled', alpha=0.2, label='Histogram')
-
 
 	plt.legend(loc='upper right')
 	plt.xlabel('x')
@@ -57,6 +54,26 @@ def test_gmm():
 
 	print("Done")
 
+
+
+"""
+Test the KL Divergence function
+"""
+
+def test_kl_divergence():
+	componentParamList = [(1/3, 0, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
+	gmm_1 = tvgmm.GaussianMixtureModel(componentParamList)
+
+	kl_div_1 = tvgmm.gmm_kl_divergence(gmm_1, gmm_1)
+	print("kl_div_1", end=' = ')
+	print(kl_div_1)
+
+	componentParamList = [(1/3, 1, 0.5), (1/3, -2, 1), (1/3, 4, 1)]
+	gmm_2 = tvgmm.GaussianMixtureModel(componentParamList)
+
+	kl_div_2 = tvgmm.gmm_kl_divergence(gmm_1, gmm_2)
+	print("kl_div_2", end=' = ')
+	print(kl_div_2)
 
 
 """
@@ -72,7 +89,7 @@ def test_time_varying_gmm():
 
 	x = np.linspace(-10, 10, 1000)
 
-	numTimePoints = 3000
+	numTimePoints = 100	# 3000 is a good number without the KL divergence call, 100 is good with it
 	timePoints = np.linspace(-1, 1, numTimePoints)
 
 	initialCompParamList = [(1/3, 0, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
@@ -80,18 +97,27 @@ def test_time_varying_gmm():
 
 	tvGMM = tvgmm.TimeVaryingGMM(initialCompParamList, componentTimeParamList)
 
+	initialGMM = tvgmm.TimeVaryingGMM(initialCompParamList, componentTimeParamList)
+
+	initial_y = initialGMM.getCurrentPDFCurve(x)
+	plt.plot(x, initial_y, label='Reference pdf')
 	
 	def updateAndGetCurrentCurve(frame):
 		nonlocal timePoints, tvGMM, x, curve
 
 		time = timePoints[frame]
-		print("\t frame=%d, time=%.3f" % (frame, time))
 
 		tvGMM.updateModel(time)
-	
+
+		kl_div = -1
+		kl_div = tvgmm.gmm_kl_divergence(tvGMM.gmm, initialGMM.gmm)
+		
+		print("\t frame=%d, time=%.3f, kl_div=%.3f" % (frame, time, kl_div))
+
 		#print(tvGMM)
 
 		y = tvGMM.getCurrentPDFCurve(x)
+
 	
 		curve.set_data(x, y)
 
@@ -99,6 +125,8 @@ def test_time_varying_gmm():
 
 	anim_obj = anim.FuncAnimation(fig=fig, func=updateAndGetCurrentCurve, frames=numTimePoints, interval=10, blit=True)
 
+	plt.legend(loc='upper right')
+	plt.xlabel('x')
 	plt.show()
 
 
@@ -107,4 +135,5 @@ def test_time_varying_gmm():
 # Call test functions
 
 #test_gmm();
+test_kl_divergence();
 test_time_varying_gmm();

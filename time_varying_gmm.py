@@ -8,6 +8,7 @@ Plot the time varying pdf
 """
 
 import scipy.stats as st
+import scipy.integrate as integrate
 import numpy as np
 import math
 
@@ -158,3 +159,18 @@ class TimeVaryingGMM:
 	
 	def getCurrentPDFCurve(self, x):
 		return self.gmm.pdf(x)
+
+
+def gmm_kl_divergence(gmm_p, gmm_q):
+
+	def func(x):
+		nonlocal gmm_p, gmm_q
+		px = gmm_p.pdf(x)
+		qx = gmm_q.pdf(x)
+
+		return px * np.log(px/qx)
+
+	
+	result, error = integrate.quad(func, -10, 10)
+
+	return result
