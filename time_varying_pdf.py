@@ -109,32 +109,49 @@ class GaussianMixtureModel(st.rv_continuous):
 
 class TimeVaryingGMM:
 
-	#class ComponentParams:
-	#	def __init__(self, weight, mean, std):
-	#		self.weight = weight
-	#		self.mean = mean
-	#		self.std = std
-	
-	def __init__(self, componentParamList):
-		self.gmm = GaussianMixtureModel(componentParamList)
-		self.currentTime = 0
+	class ComponentTimeParams:
+		def __init__(self, mean_amp, mean_theta, std_amp, std_theta):
+			self.mean_amp = mean_amp
+			self.mean_theta = mean_theta
+			self.std_amp = std_amp
+			self.std_theta = std_theta
 
-		#self.componentPramList = [ComponentParams(t[0], t[1], t[2]) for t in componentParamList]
+		def getParams(self, t):
+			mean_t = self.mean_amp * np.sin (self.mean_theta * t)
+			std_t = self.std_amp * np.sin (self.std_theta * t)
+			std_t = abs(std_t)
+			return (mean_t, std_t)
+
+		def __repr__(self):
+			return "ComponentTimeParams --> mean_amp=%.2f, mean_theta=%.2f, std_amp=%.2f, std_theta=%.2f" % (self.mean_amp, self.mean_theta, self.std_amp, self.std_theta)
+	
+
+	# componentTimeParamList must be a list of tuples with 4 elements (mean_amp, mean_theta, std_amp, std_theta)
+	def __init__(self, initialCompParamList, componentTimeParamList):
+		assert(len(initialCompParamList) == len(componentTimeParamList))
+
+		Comp = TimeVaryingGMM.ComponentTimeParams
+		
+		self.gmm = GaussianMixtureModel(initialCompParamList)
+		self.componentTimeParamList = [Comp(t[0], t[1], t[2], t[3]) for t in componentTimeParamList]
+
+		print(self.componentTimeParamList)
 
 	
 	def __repr__(self):
 		return "TimeVaryingGMM --> %s" % self.gmm
 	
 	
-	def updateNextTimestep(self):
-		self.currentTime += 1
+	def updateModel(self, t):
 		componentParamList = []
 		
-		for component in self.gmm.componentList:
-			#newWeight = component.weight + 0.1
-			newMean = component.mean + 0.01
-			newStd = component.std + 0.01
-			componentParamList.append((component.weight, newMean, newStd))
+		i = 0
+		for timePrams in self.componentTimeParamList:
+			mean_t, std_t = timePrams.getParams(t)
+			weight = self.gmm.componentList[i].weight
+
+			componentParamList.append((weight, mean_t, std_t))
+			i += 1
 
 		self.gmm.setModelParams(componentParamList)
 	

@@ -72,20 +72,28 @@ from matplotlib import animation
 
 fig = plt.figure()
 
-ax = plt.axes(xlim=(-10, 10), ylim=(0, 0.5))
+ax = plt.axes(xlim=(-10, 10), ylim=(0, 1))
 curve, = ax.plot([], [], lw=2)
 
 x = np.linspace(-10, 10, 1000)
 
+numTimePoints = 3000
+timePoints = np.linspace(-1, 1, numTimePoints)
 
-componentParamList = [(1/3, 0, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
-tvGMM = tvp.TimeVaryingGMM(componentParamList)
+initialCompParamList = [(1/3, 0, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
+componentTimeParamList = [(5, 5, 1, 0.5), (4, 1.5, 0.5, 1), (3, 2, 1.5, 2)]
+
+tvGMM = tvp.TimeVaryingGMM(initialCompParamList, componentTimeParamList)
 
 
-def updateAndGetCurrentCurve(t):
-	print("\t t=%d" % t)
-	tvGMM.updateNextTimestep()
-	print(tvGMM)
+def updateAndGetCurrentCurve(frame):
+	
+	time = timePoints[frame]
+	print("\t frame=%d, time=%.3f" % (frame, time))
+
+	tvGMM.updateModel(time)
+	
+	#print(tvGMM)
 
 	y = tvGMM.getCurrentPDFCurve(x)
 	
@@ -93,6 +101,6 @@ def updateAndGetCurrentCurve(t):
 
 	return curve,
 
-anim = animation.FuncAnimation(fig=fig, func=updateAndGetCurrentCurve, frames=100, interval=100, blit=True)
+anim = animation.FuncAnimation(fig=fig, func=updateAndGetCurrentCurve, frames=numTimePoints, interval=10, blit=True)
 
 plt.show()
