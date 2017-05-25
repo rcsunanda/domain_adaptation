@@ -1,4 +1,6 @@
-# time varying
+# also check the following
+# http://stackoverflow.com/questions/11874767/real-time-plotting-in-while-loop-with-matplotlib
+# http://stackoverflow.com/questions/24783530/python-realtime-plotting
 
 import numpy as np
 import matplotlib.pyplot as plt
