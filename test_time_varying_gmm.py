@@ -1,7 +1,13 @@
-import os
 
+"""
+Tests for GaussianMixtureModel, TimeVaryingGMM, and kl_divergence()
+"""
+
+# Workaround for Ctrl-C bug in scipy
+import os
 os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 os.environ['FOR_IGNORE_EXCEPTIONS'] = '1'
+
 
 import time_varying_gmm as tvgmm
 import numpy as np
@@ -9,25 +15,26 @@ import matplotlib.pyplot as plt
 import time as time_module
 import matplotlib.animation as anim
 
-"""
-Create a 1-D pdf that is a mixure of 3 Gaussians, generate some samples and plot the pdf and sample histogram
-Visually verify that the pdf and histogram are correct
-"""
 
+
+###################################################################################################
+"""
+Create a 1-D GMM and plot its pdf and histogram of some generated samples
+"""
 
 def test_gmm():
-    fig = plt.figure()
+    plt.figure()
 
     print("Creating GMM RV and plotting pdf")
 
-    componentParamList = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
-    gmmRV = tvgmm.GaussianMixtureModel(componentParamList)
+    component_params = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
+    gmm_rv = tvgmm.GaussianMixtureModel(component_params)
 
-    # newParamList = [(1/3, 4, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
-    # gmmRV.setModelParams(newParamList)	# To test setModelParams()
+    # new_params = [(1/3, 4, 0.5), (1/3, -3, 1), (1/3, 3, 1)]
+    # gmm_rv.setModelParams(new_params)	# To test setModelParams()
 
     x = np.arange(-7, 7, .1)
-    pdfPlot = plt.plot(x, gmmRV.pdf(x), label='GMM pdf')
+    pdf_plot = plt.plot(x, gmm_rv.pdf(x), label='GMM pdf')
 
     ############
 
@@ -35,21 +42,23 @@ def test_gmm():
 
     t0 = time_module.time()
 
-    numSamples = 1050
-    samples = gmmRV.rvs(size=numSamples)
+    num_samples = 1000000
+    samples = gmm_rv.rvs(size=num_samples)
 
     t1 = time_module.time()
-    timeElapsed = t1 - t0
+    time_elapsed = t1 - t0
 
-    print("Time taken to generate samples = %.2f secs" % (timeElapsed))
+    print("Time taken to generate samples = %.2f secs" % (time_elapsed))
 
     ############
 
     # print("Plotting samples")
-    # plt.scatter(samples, np.zeros(numSamples))
+    # plt.scatter(samples, np.zeros(num_samples))
 
     print("Plotting histogram")
-    histPlot = plt.hist(samples, normed=True, histtype='stepfilled', alpha=0.2, label='Histogram')
+    bin_width = 0.2
+    bins = np.arange(min(samples), max(samples) + bin_width, bin_width)
+    plt.hist(samples, normed=True, histtype='stepfilled', bins=bins, alpha=0.2, label='Histogram')
 
     plt.legend(loc='upper right')
     plt.xlabel('x')
@@ -58,34 +67,36 @@ def test_gmm():
     print("Done")
 
 
+
+###################################################################################################
 """
 Test the KL Divergence function
 """
 
-
 def test_kl_divergence():
-    componentParamList = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
-    gmm_1 = tvgmm.GaussianMixtureModel(componentParamList)
+    component_params = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
+    gmm_1 = tvgmm.GaussianMixtureModel(component_params)
 
-    kl_div_1 = tvgmm.gmm_kl_divergence(gmm_1, gmm_1)
+    kl_div_1 = tvgmm.kl_divergence(gmm_1, gmm_1)
     print("kl_div_1", end=' = ')
     print(kl_div_1)
 
-    componentParamList = [(1 / 3, 1, 0.5), (1 / 3, -2, 1), (1 / 3, 4, 1)]
-    gmm_2 = tvgmm.GaussianMixtureModel(componentParamList)
+    component_params = [(1 / 3, 1, 0.5), (1 / 3, -2, 1), (1 / 3, 4, 1)]
+    gmm_2 = tvgmm.GaussianMixtureModel(component_params)
 
-    kl_div_2 = tvgmm.gmm_kl_divergence(gmm_1, gmm_2)
+    kl_div_2 = tvgmm.kl_divergence(gmm_1, gmm_2)
     print("kl_div_2", end=' = ')
     print(kl_div_2)
 
 
+
+###################################################################################################
 """
 Create a time varying 1-D GMM and plot its pdf (animated)
 Visually verify that the pdf is varying
 """
 
-
-def test_time_varying_gmm():
+def test_time_varying_gmm_animated():
     fig = plt.figure()
 
     ax = plt.axes(xlim=(-10, 10), ylim=(0, 1))
@@ -93,100 +104,105 @@ def test_time_varying_gmm():
 
     x = np.linspace(-10, 10, 1000)
 
-    numTimePoints = 100  # 3000 is a good number without the KL divergence call, 100 is good with it
-    timePoints = np.linspace(-1, 1, numTimePoints)
+    num_time_points = 100  # 3000 is a good number without the KL divergence call, 100 is good with it
+    time_points = np.linspace(-1, 1, num_time_points)
 
-    initialCompParamList = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
-    componentTimeParamList = [(5, 5, 1, 0.5), (4, 1.5, 0.5, 1), (3, 2, 1.5, 2)]
+    initial_comp_params = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
+    component_time_param = [(5, 5, 1, 0.5), (4, 1.5, 0.5, 1), (3, 2, 1.5, 2)]
 
-    tvGMM = tvgmm.TimeVaryingGMM(initialCompParamList, componentTimeParamList)
+    tv_gmm = tvgmm.TimeVaryingGMM(initial_comp_params, component_time_param)
 
-    initialGMM = tvgmm.TimeVaryingGMM(initialCompParamList, componentTimeParamList)
+    initial_gmm = tvgmm.TimeVaryingGMM(initial_comp_params, component_time_param)   # A copy to print
 
-    initial_y = initialGMM.getCurrentPDFCurve(x)
+    initial_y = initial_gmm.get_current_pdf_curve(x)
     plt.plot(x, initial_y, label='Reference pdf')
 
-    def updateAndGetCurrentCurve(frame):
-        nonlocal timePoints, tvGMM, x, curve
+    def update_and_get_current_curve(frame):
+        nonlocal time_points, tv_gmm, x, curve
 
-        time = timePoints[frame]
+        time = time_points[frame]
 
-        tvGMM.updateModel(time)
+        tv_gmm.update_model(time)
 
         kl_div = -1
-        kl_div = tvgmm.gmm_kl_divergence(tvGMM.gmm, initialGMM.gmm)
+        kl_div = tvgmm.kl_divergence(tv_gmm.gmm, initial_gmm.gmm)
 
         print("\t frame=%d, time=%.3f, kl_div=%.3f" % (frame, time, kl_div))
 
-        # print(tvGMM)
+        # print(tv_gmm)
 
-        y = tvGMM.getCurrentPDFCurve(x)
+        y = tv_gmm.get_current_pdf_curve(x)
 
         curve.set_data(x, y)
 
         return curve,
 
-    anim_obj = anim.FuncAnimation(fig=fig, func=updateAndGetCurrentCurve, frames=numTimePoints, interval=10, blit=True)
+    anim_obj = anim.FuncAnimation(fig=fig, func=update_and_get_current_curve, frames=num_time_points, interval=10, blit=True)
 
     plt.legend(loc='upper right')
     plt.xlabel('x')
     plt.show()
 
 
+
+###################################################################################################
 """
-Create a time varying 1-D GMM and plot its pdf (animated)
+Create a time varying 1-D GMM and plot its pdf (loop)
 Visually verify that the pdf is varying
 """
 
 
-def test_time_varying_gmm_2():
+def test_time_varying_gmm_loop():
     fig = plt.figure()
 
     ax = plt.axes(xlim=(-10, 10), ylim=(0, 1))
 
     x = np.linspace(-10, 10, 1000)
 
-    numTimePoints = 100  # 3000 is a good number without the KL divergence call, 100 is good with it
-    timePoints = np.linspace(-1, 1, numTimePoints)
+    num_time_points = 100  # 3000 is a good number without the KL divergence call, 100 is good with it
+    time_points = np.linspace(-1, 1, num_time_points)
 
-    initialCompParamList = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
-    componentTimeParamList = [(5, 5, 1, 0.5), (4, 1.5, 0.5, 1), (3, 2, 1.5, 2)]
+    initial_comp_params = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
+    component_time_params = [(5, 5, 1, 0.5), (4, 1.5, 0.5, 1), (3, 2, 1.5, 2)]
 
-    tvGMM = tvgmm.TimeVaryingGMM(initialCompParamList, componentTimeParamList)
+    tvGMM = tvgmm.TimeVaryingGMM(initial_comp_params, component_time_params)
 
-    initialGMM = tvgmm.TimeVaryingGMM(initialCompParamList, componentTimeParamList)
+    initialGMM = tvgmm.TimeVaryingGMM(initial_comp_params, component_time_params)
 
-    initial_y = initialGMM.getCurrentPDFCurve(x)
+    initial_y = initialGMM.get_current_pdf_curve(x)
     plt.plot(x, initial_y, label='Reference pdf')
 
     plt.ion()
 
-    for frame in range(numTimePoints):
-        time = timePoints[frame]
+    for frame in range(num_time_points):
+        time = time_points[frame]
 
-        tvGMM.updateModel(time)
+        tvGMM.update_model(time)
 
         kl_div = -1
-        kl_div = tvgmm.gmm_kl_divergence(tvGMM.gmm, initialGMM.gmm)
+        kl_div = tvgmm.kl_divergence(tvGMM.gmm, initialGMM.gmm)
 
         print("\t frame=%d, time=%.3f, kl_div=%.3f" % (frame, time, kl_div))
 
         # print(tvGMM)
 
-        y = tvGMM.getCurrentPDFCurve(x)
+        y = tvGMM.get_current_pdf_curve(x)
 
-        pdfPlot, = plt.plot(x, y, color='red', label='Current pdf')
+        pdf_plot, = plt.plot(x, y, color='red', label='Current pdf')
         plt.pause(0.05)
 
-        pdfPlot.remove()
+        pdf_plot.remove()
 
     while True:
         plt.pause(0.05)
 
 
+
+###################################################################################################
+
 # Call test functions
 
 # test_gmm();
 # test_kl_divergence();
-# test_time_varying_gmm();
-test_time_varying_gmm_2();
+test_time_varying_gmm_animated();
+# test_time_varying_gmm_loop();
