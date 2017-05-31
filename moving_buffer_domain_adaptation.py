@@ -54,11 +54,11 @@ def estimate_time_varying_gmm():
     x = np.linspace(-10, 10, 1000)
 
     num_time_points = 100  # 3000 is a good number without the KL divergence call, 100 is good with it
-    time_points = np.linspace(-1, 1, num_time_points)
+    time_points = np.linspace(0, 2 * np.pi, num_time_points)
 
     initial_time = time_points[0]
     comp_weight_list = [1 / 3, 1 / 3, 1 / 3]
-    component_time_params = [(5, 5, 1, 0.5), (4, 1.5, 0.5, 1), (3, 2, 1.5, 2)]
+    component_time_params = [(0, 2, 1, 1.5, 1, 1), (-3, 2, 1, 2, 1, 1), (3, 2, 1, 0.8, 0.2, 1)]
 
     tv_gmm = tvgmm.TimeVaryingGMM(initial_time, comp_weight_list, component_time_params)
 

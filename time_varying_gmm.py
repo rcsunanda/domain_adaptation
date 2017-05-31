@@ -120,7 +120,7 @@ class GaussianMixtureModel(st.rv_continuous):
 ###################################################################################################
 """
 1-D GMM that can be updated given a time parameter
-Updating changes the mean and variance of each component following a sinusoidal, y(t) = A * sin(theta * t)
+Updating changes the mean and variance of each component following a sinusoidal, y(t) = k + A * sin(theta * t)
 """
 
 class TimeVaryingGMM:
@@ -129,33 +129,36 @@ class TimeVaryingGMM:
     Internal class to hold the parameters of the sinusoidal for each Gaussian component
     """
     class ComponentTimeParams:
-        def __init__(self, mean_amp, mean_theta, std_amp, std_theta):
+        def __init__(self, mean_const, mean_amp, mean_theta, std_const, std_amp, std_theta):
+            self.mean_const = mean_const
             self.mean_amp = mean_amp
             self.mean_theta = mean_theta
+
+            self.std_const = std_const
             self.std_amp = std_amp
             self.std_theta = std_theta
 
         def get_params(self, t):
-            mean_t = self.mean_amp * np.sin(self.mean_theta * t)
-            std_t = self.std_amp * np.sin(self.std_theta * t)
+            mean_t = self.mean_const + self.mean_amp * np.sin(self.mean_theta * t)
+            std_t = self.std_const + self.std_amp * np.sin(self.std_theta * t)
             std_t = abs(std_t)
             return (mean_t, std_t)
 
         def __repr__(self):
-            return "ComponentTimeParams --> mean_amp=%.2f, mean_theta=%.2f, std_amp=%.2f, std_theta=%.2f" % (
-                        self.mean_amp, self.mean_theta, self.std_amp, self.std_theta)
+            return "ComponentTimeParams --> mean_const=%.2f, mean_amp=%.2f, mean_theta=%.2f, std_const=%.2f, std_amp=%.2f, std_theta=%.2f" % (
+                        self.mean_const, self.mean_amp, self.mean_theta, self.std_const, self.std_amp, self.std_theta)
 
 
     # comp_weight_list must be a list of weights of each Gaussian component
     # initial_time = t0, the time point to which the GMM is initialized (mean and std)
-    # component_time_param_list must be a list of tuples with 4 elements (mean_amp, mean_theta, std_amp, std_theta),
+    # component_time_param_list must be a list of tuples with 4 elements (mean_const, mean_amp, mean_theta, std_const, std_amp, std_theta),
     # where each tuple in the list gives time variation parameters of a Gaussian component
     def __init__(self, initial_time, comp_weight_list, component_time_param_list):
         assert (len(comp_weight_list) == len(component_time_param_list))
 
         # Create list of ComponentTimeParams
         Comp = TimeVaryingGMM.ComponentTimeParams
-        self.component_time_param_list = [Comp(e[0], e[1], e[2], e[3]) for e in component_time_param_list]
+        self.component_time_param_list = [Comp(e[0], e[1], e[2], e[3], e[4], e[5]) for e in component_time_param_list]
 
         # Setup GMM by computing mean, std at initial_time
         initial_gmm_comp_param_list = []
