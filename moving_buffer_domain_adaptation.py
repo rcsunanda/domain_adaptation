@@ -56,12 +56,13 @@ def estimate_time_varying_gmm():
     num_time_points = 100  # 3000 is a good number without the KL divergence call, 100 is good with it
     time_points = np.linspace(-1, 1, num_time_points)
 
-    initial_comp_params = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
+    initial_time = time_points[0]
+    comp_weight_list = [1 / 3, 1 / 3, 1 / 3]
     component_time_params = [(5, 5, 1, 0.5), (4, 1.5, 0.5, 1), (3, 2, 1.5, 2)]
 
-    tv_gmm = tvgmm.TimeVaryingGMM(initial_comp_params, component_time_params)
+    tv_gmm = tvgmm.TimeVaryingGMM(initial_time, comp_weight_list, component_time_params)
 
-    initial_gmm = tvgmm.TimeVaryingGMM(initial_comp_params, component_time_params)
+    initial_gmm = tvgmm.TimeVaryingGMM(initial_time, comp_weight_list, component_time_params)
 
     initial_y = initial_gmm.get_current_pdf_curve(x)
     plt.plot(x, initial_y, label='Reference pdf')
@@ -133,5 +134,5 @@ def estimate_time_varying_gmm():
 
 # Call functions
 
+# test_update_moving_buffer()
 estimate_time_varying_gmm()
-#test_update_moving_buffer()

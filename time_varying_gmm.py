@@ -146,14 +146,24 @@ class TimeVaryingGMM:
                         self.mean_amp, self.mean_theta, self.std_amp, self.std_theta)
 
 
-    # component_time_param_list must be a list of tuples with 4 elements (mean_amp, mean_theta, std_amp, std_theta)
-    def __init__(self, initial_comp_param_list, component_time_param_list):
-        assert (len(initial_comp_param_list) == len(component_time_param_list))
+    # comp_weight_list must be a list of weights of each Gaussian component
+    # initial_time = t0, the time point to which the GMM is initialized (mean and std)
+    # component_time_param_list must be a list of tuples with 4 elements (mean_amp, mean_theta, std_amp, std_theta),
+    # where each tuple in the list gives time variation parameters of a Gaussian component
+    def __init__(self, initial_time, comp_weight_list, component_time_param_list):
+        assert (len(comp_weight_list) == len(component_time_param_list))
 
+        # Create list of ComponentTimeParams
         Comp = TimeVaryingGMM.ComponentTimeParams
+        self.component_time_param_list = [Comp(e[0], e[1], e[2], e[3]) for e in component_time_param_list]
 
-        self.gmm = GaussianMixtureModel(initial_comp_param_list)
-        self.component_time_param_list = [Comp(t[0], t[1], t[2], t[3]) for t in component_time_param_list]
+        # Setup GMM by computing mean, std at initial_time
+        initial_gmm_comp_param_list = []
+        for weight, comp_time_params in zip(comp_weight_list, self.component_time_param_list):
+            init_mean, init_std = comp_time_params.get_params(initial_time)
+            initial_gmm_comp_param_list.append((weight, init_mean, init_std))
+
+        self.gmm = GaussianMixtureModel(initial_gmm_comp_param_list)
 
         print(self.component_time_param_list)
 
