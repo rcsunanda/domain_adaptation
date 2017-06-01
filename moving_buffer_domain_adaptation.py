@@ -3,6 +3,7 @@ Domain adaptation technique by maintaining a moving buffer of samples generated 
 """
 
 import distribution_estimation as est
+import metrics
 import time_varying_gmm as tvgmm
 import numpy as np
 import matplotlib.pyplot as plt
@@ -82,7 +83,7 @@ def estimate_time_varying_gmm():
         tv_gmm.update_model(time)
 
         kl_div = -1
-        kl_div = tvgmm.kl_divergence(tv_gmm.gmm, initial_gmm.gmm)
+        kl_div = metrics.kl_divergence(tv_gmm.gmm, initial_gmm.gmm)
 
         print("\t frame=%d, time=%.3f, kl_div=%.3f" % (frame, time, kl_div))
 

@@ -1,6 +1,6 @@
 
 """
-Tests for GaussianMixtureModel, TimeVaryingGMM, and kl_divergence()
+Tests for GaussianMixtureModel and TimeVaryingGMM
 """
 
 # Workaround for Ctrl-C bug in scipy
@@ -10,6 +10,7 @@ os.environ['FOR_IGNORE_EXCEPTIONS'] = '1'
 
 
 import time_varying_gmm as tvgmm
+import metrics
 import numpy as np
 import matplotlib.pyplot as plt
 import time as time_module
@@ -70,28 +71,6 @@ def test_gmm():
 
 ###################################################################################################
 """
-Test the KL Divergence function
-"""
-
-def test_kl_divergence():
-    component_params = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
-    gmm_1 = tvgmm.GaussianMixtureModel(component_params)
-
-    kl_div_1 = tvgmm.kl_divergence(gmm_1, gmm_1)
-    print("kl_div_1", end=' = ')
-    print(kl_div_1)
-
-    component_params = [(1 / 3, 1, 0.5), (1 / 3, -2, 1), (1 / 3, 4, 1)]
-    gmm_2 = tvgmm.GaussianMixtureModel(component_params)
-
-    kl_div_2 = tvgmm.kl_divergence(gmm_1, gmm_2)
-    print("kl_div_2", end=' = ')
-    print(kl_div_2)
-
-
-
-###################################################################################################
-"""
 Create a time varying 1-D GMM and plot its pdf (animated)
 Visually verify that the pdf is varying
 """
@@ -126,7 +105,7 @@ def test_time_varying_gmm_animated():
         tv_gmm.update_model(time)
 
         kl_div = -1
-        kl_div = tvgmm.kl_divergence(tv_gmm.gmm, initial_gmm.gmm)
+        kl_div = metrics.kl_divergence(tv_gmm.gmm, initial_gmm.gmm)
 
         print("\t frame=%d, time=%.3f, kl_div=%.3f" % (frame, time, kl_div))
 
@@ -181,7 +160,7 @@ def test_time_varying_gmm_loop():
         tvGMM.update_model(time)
 
         kl_div = -1
-        kl_div = tvgmm.kl_divergence(tvGMM.gmm, initialGMM.gmm)
+        kl_div = metrics.kl_divergence(tvGMM.gmm, initialGMM.gmm)
 
         print("\t frame=%d, time=%.3f, kl_div=%.3f" % (frame, time, kl_div))
 
@@ -204,6 +183,5 @@ def test_time_varying_gmm_loop():
 # Call test functions
 
 # test_gmm();
-# test_kl_divergence();
 # test_time_varying_gmm_animated();
 test_time_varying_gmm_loop();
