@@ -55,3 +55,26 @@ def estimate_pdf(x, ecdf):
     return (new_x_for_derivation, derivatives)
 
 
+
+###################################################################################################
+"""
+Generate sample_count samples from a given discrete cdf
+"""
+
+def generate_samples_from_cdf(x_values, cdf_values, sample_count):
+    assert len(x_values) == len(cdf_values)
+
+    samples = []
+    for i in range(0, sample_count):
+        threshold = np.random.uniform(cdf_values[0], cdf_values[-1])    # Start and end of cdf (ideally should be 0 and 1)
+
+        value_found = False
+        for x, y in zip(x_values, cdf_values):
+            if y >= threshold:
+                samples.append(x)
+                value_found = True
+                break
+
+        assert value_found, "A sample value MUST be found in each iteration of outer loop"
+
+    return samples

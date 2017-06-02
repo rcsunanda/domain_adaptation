@@ -7,6 +7,7 @@ import distribution_estimation as est
 import time_varying_gmm as tvgmm
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.stats as st
 
 
 
@@ -58,9 +59,46 @@ def test_estimate_gmm_ecdf_pdf():
     print("Done")
 
 
+###################################################################################################
+"""
+Create Gaussian RV, and use its cdf to generate samples from generate_samples_from_cdf
+Plot cdf, pdf, and sample histogram, and visually verify that the histogram matches the pdf
+"""
+def test_generate_samples_from_cdf():
+
+    rv = st.norm(loc=0, scale=1)
+
+    x = np.linspace(-3, 3, 1000)
+    cdf = rv.cdf(x)
+
+    plt.plot(x, rv.pdf(x), label="Gaussian pdf")
+    plt.plot(x, cdf, label="Gaussian cdf")
+
+    num_samples = 1000
+
+    # samples = []
+    # for i in range(0, num_samples):
+    #     sample = est.generate_samples_from_cdf(x, cdf, -1)
+    #     samples.append(sample)
+
+    samples = est.generate_samples_from_cdf(x, cdf, num_samples)
+
+    bin_width = 0.2
+    bins = np.arange(min(samples), max(samples) + bin_width, bin_width)
+    plt.hist(samples, normed=True, histtype='stepfilled', bins=bins, alpha=0.2, label='Histogram of generated samples')
+
+    # lib_samples = rv.rvs(num_samples)
+    # bins = np.arange(min(lib_samples), max(lib_samples) + bin_width, bin_width)
+    # plt.hist(lib_samples, normed=True, histtype='stepfilled', bins=bins, alpha=0.2, label='Histogram-library-code')
+
+    plt.legend(loc='upper right')
+    plt.xlabel('x')
+    plt.show()
+
 
 ###################################################################################################
 
 # Call test functions
 
-test_estimate_gmm_ecdf_pdf()
+# test_estimate_gmm_ecdf_pdf()
+test_generate_samples_from_cdf()
