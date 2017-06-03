@@ -69,6 +69,14 @@ class GaussianMixtureModel(st.rv_continuous):
 
         return pdf_val
 
+    def _cdf(self, x):
+        cdf_val = 0
+
+        for comp in self.component_list:
+            cdf_val += comp.weight * comp.RV.cdf(x)
+
+        return cdf_val
+
 
     # Implement the _rvs() function as the default sampling method is very slow
     # http://stackoverflow.com/questions/42552117/subclassing-of-scipy-stats-rv-continuous
