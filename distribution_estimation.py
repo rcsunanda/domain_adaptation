@@ -59,6 +59,7 @@ def estimate_pdf(x, ecdf):
 ###################################################################################################
 """
 Generate sample_count samples from a given discrete cdf
+See https://stackoverflow.com/questions/3679694/a-weighted-version-of-random-choice
 """
 
 def generate_samples_from_cdf(x_values, cdf_values, sample_count):
