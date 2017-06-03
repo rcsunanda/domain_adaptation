@@ -3,6 +3,7 @@ Misc tests for various Python functionality
 """
 
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 
 
@@ -42,7 +43,30 @@ def test_differentiation():
 
 
 ###################################################################################################
+"""
+Try different relationships between memory factor (k), and buffer size (y)
+"""
+
+def test_k_vs_buffer_size():
+    k = np.linspace(0, 1, 10000)
+
+    y1 = 1000 + 10000*k
+
+    y2 = (200) * np.exp(4*k + 1.2)
+
+    plt.plot(k, y1, label="y1 - linear")
+    plt.plot(k, y2, label="y2 - exponential")
+
+    plt.legend(loc='upper right')
+    plt.xlabel('k')
+    plt.ylabel('buffer_size')
+    plt.show()
+
+
+
+###################################################################################################
 
 # Call functions
 
 # test_differentiation()
+test_k_vs_buffer_size()

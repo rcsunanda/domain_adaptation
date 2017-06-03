@@ -70,7 +70,9 @@ def estimate_time_varying_gmm():
 
     plt.ion()
 
-    buffer_size = 5000   # no of initial samples
+    K = 0.5   # Memory factor [0,1]
+    buffer_size = 1000 + 10000 * K
+
     moving_buffer = tv_gmm.gmm.rvs(size=buffer_size)
 
     # Iterate through time points

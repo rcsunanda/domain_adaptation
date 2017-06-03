@@ -13,6 +13,7 @@ import pyemd
 """
 Compute Kullback–Leibler divergence between two RVs
 """
+
 def kl_divergence(rv_p, rv_q):
     def func(x):
         nonlocal rv_p, rv_q
@@ -33,6 +34,7 @@ One sample KS test is for comparing a data sample (generated from some estimated
 Answers the question: did the data come from this cdf/ similar cdf? 
 true_cdf must be a callable
 """
+
 def one_sample_ks_test(samples, true_cdf):
     D, p = st.kstest(samples, true_cdf)
     return D, p
@@ -43,6 +45,7 @@ def one_sample_ks_test(samples, true_cdf):
 Manually compute the KS statistic D = max(abs(ecdf - true_cdf))
 Return (x_val, D)
 """
+
 def manual_ks_stat(x_vals, ecdf_vals, true_cdf):
     assert (len(x_vals) == len(ecdf_vals))
 
@@ -68,6 +71,7 @@ Return the mean squared error between an estimate and a true function
 x_vals and estimated_func_vals are arrays corresponding to the estimate
 true_func must be callable
 """
+
 def mean_squared_error(x_vals, estimated_func_vals, true_func):
     assert (len(x_vals) == len(estimated_func_vals))
 
@@ -85,6 +89,7 @@ def mean_squared_error(x_vals, estimated_func_vals, true_func):
 Return the Earth Mover's Distance (EMD) or the 1st Wasserstein distance between two functions (pdfs)
 Taken from pyemd (https://github.com/wmayner/pyemd) - cite the papers in this page
 """
+
 def emd(x_vals, estimated_func_vals, true_func):
     assert (len(x_vals) == len(estimated_func_vals))
 

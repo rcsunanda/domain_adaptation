@@ -15,6 +15,7 @@ import distribution_estimation as est
 """
 Test the KL Divergence function
 """
+
 def test_kl_divergence():
     component_params = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
     gmm_1 = tvgmm.GaussianMixtureModel(component_params)
@@ -36,6 +37,7 @@ def test_kl_divergence():
 """
 Test the one sample Kolmogorov–Smirnov test function on a Gaussian
 """
+
 def test_one_sample_ks_test_on_gaussian():
 
     # Create a Gaussian RV, get some samples and run KS test
@@ -112,6 +114,7 @@ def test_one_sample_ks_test_on_gaussian():
 """
 Test the one sample Kolmogorov–Smirnov test function on a GMM
 """
+
 def test_one_sample_ks_test_on_gmm():
 
     # Create a GMM RV, get some samples and run KS test
@@ -152,10 +155,12 @@ def test_one_sample_ks_test_on_gmm():
     plt.show()
 
 
+
 ###################################################################################################
 """
 Test the mean_squared_error() function on a Gaussian
 """
+
 def test_mean_squared_error_on_gaussian():
 
     # Create a Gaussian RV, get some samples, estimate ecdf
@@ -185,10 +190,12 @@ def test_mean_squared_error_on_gaussian():
     print("test_mean_squared_error_on_gaussian; rv2; mse2={:.6f}".format(mse2))
 
 
+
 ###################################################################################################
 """
 Test Earth Mover's Distance (EMD) metric on a Gaussian
 """
+
 def test_emd_on_gaussian():
 
     # Create a Gaussian RV, get some samples, estimate ecdf
@@ -216,6 +223,7 @@ def test_emd_on_gaussian():
     esd2 = metrics.emd(sorted, ecdf, rv2.cdf)
 
     print("test_mean_squared_error_on_gaussian; rv2; esd2={:.6f}".format(esd2))
+
 
 
 ###################################################################################################
