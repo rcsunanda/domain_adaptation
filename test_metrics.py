@@ -185,6 +185,38 @@ def test_mean_squared_error_on_gaussian():
     print("test_mean_squared_error_on_gaussian; rv2; mse2={:.6f}".format(mse2))
 
 
+###################################################################################################
+"""
+Test Earth Mover's Distance (EMD) metric on a Gaussian
+"""
+def test_emd_on_gaussian():
+
+    # Create a Gaussian RV, get some samples, estimate ecdf
+
+    rv1 = st.norm(loc=0, scale=1)
+    num_samples = 500
+
+    samples = rv1.rvs(num_samples)
+
+    sorted, ecdf = est.estimate_ecdf(samples)
+
+    emd1 = metrics.emd(sorted, ecdf, rv1.cdf)
+
+    print("test_emd_on_gaussian; rv1; emd1={:.6f}".format(emd1))
+
+
+    # Same sample (ecdf), compare with different Gaussian (rv2)
+
+    print("############################")
+
+    plt.figure()
+
+    rv2 = st.norm(loc=3, scale=1)
+
+    esd2 = metrics.emd(sorted, ecdf, rv2.cdf)
+
+    print("test_mean_squared_error_on_gaussian; rv2; esd2={:.6f}".format(esd2))
+
 
 ###################################################################################################
 
@@ -193,4 +225,5 @@ def test_mean_squared_error_on_gaussian():
 # test_kl_divergence()
 # test_one_sample_ks_test_on_gaussian()
 # test_one_sample_ks_test_on_gmm()
-test_mean_squared_error_on_gaussian()
+# test_mean_squared_error_on_gaussian()
+test_emd_on_gaussian()

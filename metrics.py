@@ -5,8 +5,8 @@ Metrics to measure distance between probability distributions (pdf, cdf)
 import numpy as np
 import scipy.integrate as integrate
 import scipy.stats as st
-import scipy.stats as st
 import sklearn.metrics as skmetrics
+import pyemd
 
 
 ###################################################################################################
@@ -44,6 +44,7 @@ Manually compute the KS statistic D = max(abs(ecdf - true_cdf))
 Return (x_val, D)
 """
 def manual_ks_stat(x_vals, ecdf_vals, true_cdf):
+    assert (len(x_vals) == len(ecdf_vals))
 
     current_max = 0
     current_max_x = 0
@@ -68,6 +69,8 @@ x_vals and estimated_func_vals are arrays corresponding to the estimate
 true_func must be callable
 """
 def mean_squared_error(x_vals, estimated_func_vals, true_func):
+    assert (len(x_vals) == len(estimated_func_vals))
+
     true_func_vals = []
     for x in x_vals:
         true_func_vals.append(true_func(x))
@@ -75,3 +78,32 @@ def mean_squared_error(x_vals, estimated_func_vals, true_func):
     mse = skmetrics.mean_squared_error(estimated_func_vals, true_func_vals)
 
     return mse
+
+
+###################################################################################################
+"""
+Return the Earth Mover's Distance (EMD) or the 1st Wasserstein distance between two functions (pdfs)
+Taken from pyemd (https://github.com/wmayner/pyemd) - cite the papers in this page
+"""
+def emd(x_vals, estimated_func_vals, true_func):
+    assert (len(x_vals) == len(estimated_func_vals))
+
+    n = len(x_vals)
+
+    true_func_vals = np.zeros(n)
+    for i, x in enumerate(x_vals):
+        true_func_vals[i] = true_func(x)
+
+    distance_matrix = np.zeros((n,n))
+
+    for i in range(0, n):
+        for j in range (0, n):
+            distance_matrix[i][j] = abs(x_vals[i] - x_vals[j])
+
+    # print("distance_matrix=\n{}".format(distance_matrix))
+
+    estimated_func_vals = np.array(estimated_func_vals) # Convert list to np.array type
+
+    emd = pyemd.emd(estimated_func_vals, true_func_vals, distance_matrix)   # Expensive computation
+
+    return emd
