@@ -5,7 +5,8 @@ Metrics to measure distance between probability distributions (pdf, cdf)
 import numpy as np
 import scipy.integrate as integrate
 import scipy.stats as st
-
+import scipy.stats as st
+import sklearn.metrics as skmetrics
 
 
 ###################################################################################################
@@ -40,7 +41,7 @@ def one_sample_ks_test(samples, true_cdf):
 ###################################################################################################
 """
 Manually compute the KS statistic D = max(abs(ecdf - true_cdf))
-Returns (x_val, D)
+Return (x_val, D)
 """
 def manual_ks_stat(x_vals, ecdf_vals, true_cdf):
 
@@ -58,3 +59,19 @@ def manual_ks_stat(x_vals, ecdf_vals, true_cdf):
     # print ("ks_test; x={}, D={}".format(current_max_x, current_max))
 
     return (current_max_x, current_max)
+
+
+###################################################################################################
+"""
+Return the mean squared error between an estimate and a true function
+x_vals and estimated_func_vals are arrays corresponding to the estimate
+true_func must be callable
+"""
+def mean_squared_error(x_vals, estimated_func_vals, true_func):
+    true_func_vals = []
+    for x in x_vals:
+        true_func_vals.append(true_func(x))
+
+    mse = skmetrics.mean_squared_error(estimated_func_vals, true_func_vals)
+
+    return mse

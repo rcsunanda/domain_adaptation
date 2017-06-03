@@ -15,7 +15,6 @@ import distribution_estimation as est
 """
 Test the KL Divergence function
 """
-
 def test_kl_divergence():
     component_params = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
     gmm_1 = tvgmm.GaussianMixtureModel(component_params)
@@ -37,7 +36,6 @@ def test_kl_divergence():
 """
 Test the one sample Kolmogorov–Smirnov test function on a Gaussian
 """
-
 def test_one_sample_ks_test_on_gaussian():
 
     # Create a Gaussian RV, get some samples and run KS test
@@ -76,7 +74,7 @@ def test_one_sample_ks_test_on_gaussian():
     plt.xlabel('x')
 
 
-    #### Same sample, compare with different Gaussian (rv2)
+    # Same sample, compare with different Gaussian (rv2)
 
     print("############################")
 
@@ -114,7 +112,6 @@ def test_one_sample_ks_test_on_gaussian():
 """
 Test the one sample Kolmogorov–Smirnov test function on a GMM
 """
-
 def test_one_sample_ks_test_on_gmm():
 
     # Create a GMM RV, get some samples and run KS test
@@ -155,12 +152,45 @@ def test_one_sample_ks_test_on_gmm():
     plt.show()
 
 
+###################################################################################################
+"""
+Test the mean_squared_error() function on a Gaussian
+"""
+def test_mean_squared_error_on_gaussian():
+
+    # Create a Gaussian RV, get some samples, estimate ecdf
+
+    rv1 = st.norm(loc=0, scale=1)
+    num_samples = 1000
+
+    samples = rv1.rvs(num_samples)
+
+    sorted, ecdf = est.estimate_ecdf(samples)
+
+    mse1 = metrics.mean_squared_error(sorted, ecdf, rv1.cdf)
+
+    print("test_mean_squared_error_on_gaussian; rv1; mse1={:.6f}".format(mse1))
+
+
+    # Same sample (ecdf), compare with different Gaussian (rv2)
+
+    print("############################")
+
+    plt.figure()
+
+    rv2 = st.norm(loc=3, scale=1)
+
+    mse2 = metrics.mean_squared_error(sorted, ecdf, rv2.cdf)
+
+    print("test_mean_squared_error_on_gaussian; rv2; mse2={:.6f}".format(mse2))
+
 
 
 ###################################################################################################
 
 # Call test functions
 
-# test_kl_divergence();
-test_one_sample_ks_test_on_gaussian();
-test_one_sample_ks_test_on_gmm();
+# test_kl_divergence()
+# test_one_sample_ks_test_on_gaussian()
+# test_one_sample_ks_test_on_gmm()
+test_mean_squared_error_on_gaussian()
