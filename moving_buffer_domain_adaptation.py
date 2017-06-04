@@ -7,6 +7,7 @@ import metrics
 import time_varying_gmm as tvgmm
 import numpy as np
 import matplotlib.pyplot as plt
+import utility
 
 
 
@@ -15,10 +16,31 @@ import matplotlib.pyplot as plt
 Shift buffer to left (oldest elements are removed), and append given elements to end of buffer 
 """
 
-def update_moving_buffer(moving_buffer, elements_to_add):
+def update_moving_buffer(moving_buffer, moving_buff_curr_sample_count, elements_to_add):
     new_list_size = len(elements_to_add)
-    moving_buffer[0: len(moving_buffer) - new_list_size] = moving_buffer[new_list_size:]  # shift
-    moving_buffer[len(moving_buffer) - new_list_size:] = elements_to_add
+    buffer_size = len(moving_buffer)
+
+    # If buffer is not full with samples, add as many samples as possible to the buffer
+
+    remaining_buff_length = buffer_size - moving_buff_curr_sample_count
+    possible_add_count = 0  # For use in second if-block if the first if-block is not executed
+
+    if (remaining_buff_length > 0):
+        possible_add_count = min(remaining_buff_length, new_list_size)
+        a = moving_buff_curr_sample_count
+        b = moving_buff_curr_sample_count + possible_add_count
+        moving_buffer[a: b] = elements_to_add[0: possible_add_count]
+
+
+    # If some more elements remaining; shift buffer and append
+
+    if (new_list_size > possible_add_count):
+        remaining_elements = elements_to_add[possible_add_count:]
+        remaining_element_count = new_list_size - possible_add_count
+
+        # Shift elements to left (removed), and append new elements to right
+        moving_buffer[0: buffer_size - remaining_element_count] = moving_buffer[remaining_element_count:]
+        moving_buffer[buffer_size - remaining_element_count:] = remaining_elements
 
     return moving_buffer
 
@@ -30,13 +52,25 @@ Test for update_moving_buffer()
 """
 
 def test_update_moving_buffer():
-    moving_buffer = np.array(range(0,10))
+    buffer_size = 10
+    moving_buffer = np.zeros(buffer_size)
+
+    init_sample_count = 5
+    assert (buffer_size >= init_sample_count)   # Simplifying assumption
+
+    moving_buffer[0:init_sample_count] = list(range(0, init_sample_count))
+
+    moving_buff_curr_sample_count = init_sample_count
+
     print("moving_buffer_initial={}".format(moving_buffer))
 
     for i in range(1,5):  # do the move 4 times for testing
         new_list_size = 3   # 3 elements to add to moving list
         new_list = list(range(10*i, 10*i + new_list_size))
-        moving_buffer = update_moving_buffer(moving_buffer, new_list)
+
+        moving_buffer = update_moving_buffer(moving_buffer, moving_buff_curr_sample_count, new_list)
+        moving_buff_curr_sample_count += new_list_size
+
         print("iter={}, moving_buffer={}".format(i, moving_buffer))
 
 
@@ -70,12 +104,23 @@ def estimate_time_varying_gmm():
 
     plt.ion()
 
+
+    # Create fixed size moving buffer and insert some generated samples
+
     K = 0.5   # Memory factor [0,1]
-    buffer_size = 1000 + 10000 * K
+    buffer_size = int(1000 + 10000 * K)
+    moving_buffer = np.zeros(buffer_size)
 
-    moving_buffer = tv_gmm.gmm.rvs(size=buffer_size)
+    init_sample_count = 1000
+    assert (buffer_size >= init_sample_count)   # Simplifying assumption
+    init_samples = tv_gmm.gmm.rvs(size=init_sample_count)
 
-    # Iterate through time points
+    moving_buffer[0:init_sample_count] = init_samples
+    moving_buff_curr_sample_count = init_sample_count   # Required when some of the buffer is not filled with samples
+
+    # utility.dump_data_to_csv("moving_buffer_init", moving_buffer)
+
+    # For each time point, update GMM, generate samples and estimate new cdf/pdf
 
     for frame in range(num_time_points):
 
@@ -102,16 +147,22 @@ def estimate_time_varying_gmm():
 
         num_new_samples = 500
         new_samples = tv_gmm.gmm.rvs(size=num_new_samples)
-        moving_buffer = update_moving_buffer(moving_buffer, new_samples)
+
+        moving_buffer = update_moving_buffer(moving_buffer, moving_buff_curr_sample_count, new_samples)
+        moving_buff_curr_sample_count += num_new_samples
+
+        end = min(moving_buff_curr_sample_count, len(moving_buffer))
+        current_valid_samples = moving_buffer[0:end]
 
         bin_width = 0.2
-        bins = np.arange(min(moving_buffer), max(moving_buffer) + bin_width, bin_width)
-        counts, bins_s, bars = plt.hist(moving_buffer, normed=True, histtype='stepfilled', bins=bins, alpha=0.2, color='orange', label='Moving buffer histogram')
+        bins = np.arange(min(current_valid_samples), max(current_valid_samples) + bin_width, bin_width)
+        counts, bins_s, bars = plt.hist(current_valid_samples, normed=True, histtype='stepfilled', bins=bins, alpha=0.2, color='orange', label='Moving buffer histogram')
 
+        # utility.dump_data_to_csv("moving_buffer_iter_{}".format(frame), current_valid_samples)
 
         # Estimate ecdf and pdf
 
-        sorted, ecdf = est.estimate_ecdf(moving_buffer)
+        sorted, ecdf = est.estimate_ecdf(current_valid_samples)
         ecdf_plot, = plt.plot(sorted, ecdf, color='purple', label="estimated-ecdf")
 
         new_x, derivatives = est.estimate_pdf(sorted, ecdf)
@@ -129,7 +180,7 @@ def estimate_time_varying_gmm():
         pdf_plot.remove()
         ecdf_plot.remove()
         derivatives_plot.remove()
-        _ = [b.remove() for b in bars]  # remove histogram
+        _ = [b.remove() for b in bars]  # Remove histogram
 
 
 
