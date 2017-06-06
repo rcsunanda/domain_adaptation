@@ -27,32 +27,27 @@ def estimate_ecdf(samples):
 """
 Given the ecdf (as x,y), estimates pdf by interpolating the ecdf and differentiating it
 Returns (x,y) pairs of the pdf
+Implement in this manner - https://scicomp.stackexchange.com/questions/480/how-can-i-numerically-differentiate-an-unevenly-sampled-function
 """
 
-def estimate_pdf(x, ecdf):
-    print("estimate_pdf; Estimating PDF from ECDF")
+def estimate_pdf(x_vals, ecdf):
+    ecdf_interp_obj = interp.interp1d(x_vals, ecdf)
 
-    ecdf_interp_obj = interp.interp1d(x, ecdf)
+    new_x = np.linspace(x_vals[0], x_vals[-1], len(x_vals))
+    new_y = ecdf_interp_obj(new_x)
 
-    new_x = np.linspace(x[0], x[-1], len(x))
+    dx = new_x[1] - new_x[0]
+    np_difference = np.gradient(new_y) / dx
 
-    #ax1.plot(new_x, ecdf_interp_obj(new_x), label="x-vs-ecdf_interp_obj")
+    # Moving average filter (twice) (the difference function is very noisy)
 
+    N = len(x_vals) * 10 // 100
+    np_difference = np.convolve(np_difference, np.ones((N,)) / N, mode='same')
 
-    # Must take some subset of new_x, as misc.derivative() will call ecdf_interp_obj() outside the given values
-    # 10% trimming sometimes gives bound errors - may need to use another method to estimate pdf
-    start = len(x) * 10 // 100
-    end = len(x) * 90 // 100
-    new_x_for_derivation = new_x[start:end]
+    N = len(x_vals) * 2 // 100
+    np_difference = np.convolve(np_difference, np.ones((N,)) / N, mode='same')
 
-    derivatives = []
-    for xp in new_x_for_derivation:
-        deriv = misc.derivative(func=ecdf_interp_obj, x0=xp)
-        derivatives.append(deriv)
-
-    #ax2.plot(new_x_for_derivation, derivatives, label="new_x-vs-derivatives")
-
-    return (new_x_for_derivation, derivatives)
+    return (new_x, np_difference)
 
 
 

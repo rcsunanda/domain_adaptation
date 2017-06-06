@@ -25,7 +25,7 @@ def test_estimate_gmm_ecdf_pdf():
     component_param = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
     gmm_rv = tvgmm.GaussianMixtureModel(component_param)
 
-    num_samples = 50000
+    num_samples = 1000
 
     x = np.linspace(-7, 7, num_samples)
     ax1.plot(x, gmm_rv.pdf(x), label='True pdf')
@@ -100,5 +100,5 @@ def test_generate_samples_from_cdf():
 
 # Call test functions
 
-# test_estimate_gmm_ecdf_pdf()
-test_generate_samples_from_cdf()
+test_estimate_gmm_ecdf_pdf()
+# test_generate_samples_from_cdf()

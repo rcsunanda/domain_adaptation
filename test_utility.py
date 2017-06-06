@@ -8,7 +8,7 @@ import utility
 
 ###################################################################################################
 """
-Test CSV dump function
+Write two lists to a CSV file and see if they are properly appended 
 """
 
 def test_dump_data_to_csv():
