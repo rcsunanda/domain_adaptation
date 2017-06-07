@@ -82,23 +82,27 @@ Compute and plot distance metrics between current true distribution and adapted 
 
 metric_mse = []
 metric_kl_div = []
-metric_emd = []
 metric_ks_stat = []
+metric_emd = []
 
-def compute_metrics(x_vals, estimated_ecdf, true_cdf):
+def compute_metrics(cdf_x_vals, estimated_ecdf, true_cdf, pdf_xvals, estimated_pdf, true_pdf):
 
     print("----- Computing MSE -------")
-    mse = metrics.mean_squared_error(x_vals, estimated_ecdf, true_cdf)
+    mse = metrics.mean_squared_error(cdf_x_vals, estimated_ecdf, true_cdf)
 
     # print("----- Computing EMD -------")
-    # emd = metrics.emd(x_vals, estimated_ecdf, true_cdf)
+    # emd = metrics.emd(cdf_x_vals, estimated_ecdf, true_cdf)
 
     print("----- Computing KS stat -------")
-    x, ks_statistic = metrics.manual_ks_stat(x_vals, estimated_ecdf, true_cdf)
+    x, ks_statistic = metrics.manual_ks_stat(cdf_x_vals, estimated_ecdf, true_cdf)
+
+    print("----- Computing KL divergence -------")
+    kl_div = metrics.approx_kl_divergence(pdf_xvals, estimated_pdf, true_pdf)
 
     metric_mse.append(mse)
-    # metric_emd.append(emd)
+    metric_kl_div.append(kl_div)
     metric_ks_stat.append(ks_statistic)
+    # metric_emd.append(emd)
 
 
 def plot_metrics():
@@ -107,11 +111,10 @@ def plot_metrics():
 
     ax1.plot(x, metric_mse)
     ax2.plot(x, metric_ks_stat)
+    ax3.plot(x, metric_kl_div)
+    # ax4.plot(x, metric_emd)
 
-    # ax3.plot(x, metric_mse, label="MSE")
-    # ax4.plot(x, metric_mse, label="MSE")
-
-    plt.legend(loc='upper right')
+    # plt.legend(loc='upper right')
     plt.show()
 
 
@@ -129,7 +132,7 @@ def estimate_time_varying_gmm():
 
     x = np.linspace(-10, 10, 1000)
 
-    num_time_points = 20  # 3000 is a good number without the KL divergence call, 100 is good with it
+    num_time_points = 15  # 3000 is a good number without the KL divergence call, 100 is good with it
     time_points = np.linspace(0, 2 * np.pi, num_time_points)
 
     initial_time = time_points[0]
@@ -170,10 +173,7 @@ def estimate_time_varying_gmm():
         time = time_points[frame]
         tv_gmm.update_model(time)
 
-        kl_div = -1
-        # kl_div = metrics.kl_divergence(tv_gmm.gmm, initial_gmm.gmm)
-
-        print("\t frame=%d, time=%.3f, kl_div=%.3f" % (frame, time, kl_div))
+        print("\t frame=%d, time=%.3f" % (frame, time))
 
         # print(tv_gmm)
 
@@ -204,12 +204,12 @@ def estimate_time_varying_gmm():
         sorted, ecdf = est.estimate_ecdf(current_valid_samples)
         ecdf_plot, = plt.plot(sorted, ecdf, color='purple', label="estimated-ecdf")
 
-        new_x, derivatives = est.estimate_pdf(sorted, ecdf)
-        derivatives_plot, = plt.plot(new_x, derivatives, color='green', label="estimated-pdf")
+        new_x, estimated_pdf = est.estimate_pdf(sorted, ecdf)
+        derivatives_plot, = plt.plot(new_x, estimated_pdf, color='green', label="estimated-pdf")
 
         #######
 
-        compute_metrics(sorted, ecdf, tv_gmm.gmm.cdf)
+        compute_metrics(sorted, ecdf, tv_gmm.gmm.cdf, new_x, estimated_pdf, tv_gmm.gmm.pdf)
 
         #######
 
