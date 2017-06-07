@@ -77,18 +77,59 @@ def test_update_moving_buffer():
 
 ###################################################################################################
 """
+Compute and plot distance metrics between current true distribution and adapted estimated distribution
+"""
+
+metric_mse = []
+metric_kl_div = []
+metric_emd = []
+metric_ks_stat = []
+
+def compute_metrics(x_vals, estimated_ecdf, true_cdf):
+
+    print("----- Computing MSE -------")
+    mse = metrics.mean_squared_error(x_vals, estimated_ecdf, true_cdf)
+
+    # print("----- Computing EMD -------")
+    # emd = metrics.emd(x_vals, estimated_ecdf, true_cdf)
+
+    print("----- Computing KS stat -------")
+    x, ks_statistic = metrics.manual_ks_stat(x_vals, estimated_ecdf, true_cdf)
+
+    metric_mse.append(mse)
+    # metric_emd.append(emd)
+    metric_ks_stat.append(ks_statistic)
+
+
+def plot_metrics():
+    metric_fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, sharex=True)
+    x = list(range(0,len(metric_mse)))
+
+    ax1.plot(x, metric_mse)
+    ax2.plot(x, metric_ks_stat)
+
+    # ax3.plot(x, metric_mse, label="MSE")
+    # ax4.plot(x, metric_mse, label="MSE")
+
+    plt.legend(loc='upper right')
+    plt.show()
+
+
+
+###################################################################################################
+"""
 Create a time varying GMM, generate samples at each time point, and estimate ecdf and pdf using those samples
 Plot to visualize the true pdf, generated samples, and estimated ecdf and pdf
 """
 
 def estimate_time_varying_gmm():
-    #fig = plt.figure()
+    fig = plt.figure()
 
     #ax = plt.axes(xlim=(-10, 10), ylim=(0, 1))
 
     x = np.linspace(-10, 10, 1000)
 
-    num_time_points = 100  # 3000 is a good number without the KL divergence call, 100 is good with it
+    num_time_points = 20  # 3000 is a good number without the KL divergence call, 100 is good with it
     time_points = np.linspace(0, 2 * np.pi, num_time_points)
 
     initial_time = time_points[0]
@@ -130,7 +171,7 @@ def estimate_time_varying_gmm():
         tv_gmm.update_model(time)
 
         kl_div = -1
-        kl_div = metrics.kl_divergence(tv_gmm.gmm, initial_gmm.gmm)
+        # kl_div = metrics.kl_divergence(tv_gmm.gmm, initial_gmm.gmm)
 
         print("\t frame=%d, time=%.3f, kl_div=%.3f" % (frame, time, kl_div))
 
@@ -142,8 +183,6 @@ def estimate_time_varying_gmm():
 
 
         # Generate samples and update moving buffer
-
-        print("\t Generate some samples for this frame and add it to the moving buffer")
 
         num_new_samples = 500
         new_samples = tv_gmm.gmm.rvs(size=num_new_samples)
@@ -160,7 +199,7 @@ def estimate_time_varying_gmm():
 
         # utility.dump_data_to_csv("moving_buffer_iter_{}".format(frame), current_valid_samples)
 
-        # Estimate ecdf and pdf
+        # Estimate and plot ecdf and pdf
 
         sorted, ecdf = est.estimate_ecdf(current_valid_samples)
         ecdf_plot, = plt.plot(sorted, ecdf, color='purple', label="estimated-ecdf")
@@ -170,17 +209,24 @@ def estimate_time_varying_gmm():
 
         #######
 
+        compute_metrics(sorted, ecdf, tv_gmm.gmm.cdf)
+
+        #######
+
         plt.legend(loc='upper right')
         plt.xlabel('x')
-        plt.pause(0.05)
+        plt.pause(0.0001)
 
-        input("Press Enter to continue...")
+        # input("Press Enter to continue...")
 
         # Remove plots of current time point
         pdf_plot.remove()
         ecdf_plot.remove()
         derivatives_plot.remove()
         _ = [b.remove() for b in bars]  # Remove histogram
+
+    plt.ioff()
+    plot_metrics()
 
 
 

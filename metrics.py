@@ -44,15 +44,16 @@ def one_sample_ks_test(samples, true_cdf):
 """
 Manually compute the KS statistic D = max(abs(ecdf - true_cdf))
 Return (x_val, D)
+true_cdf must be callable
 """
 
-def manual_ks_stat(x_vals, ecdf_vals, true_cdf):
-    assert (len(x_vals) == len(ecdf_vals))
+def manual_ks_stat(x_vals, estimated_ecdf_vals, true_cdf):
+    assert (len(x_vals) == len(estimated_ecdf_vals))
 
     current_max = 0
     current_max_x = 0
 
-    for x, y in zip(x_vals, ecdf_vals):
+    for x, y in zip(x_vals, estimated_ecdf_vals):
         diff = abs(true_cdf(x) - y)
 
         current_max = max(current_max, diff)
@@ -88,6 +89,7 @@ def mean_squared_error(x_vals, estimated_func_vals, true_func):
 """
 Return the Earth Mover's Distance (EMD) or the 1st Wasserstein distance between two functions (pdfs)
 Taken from pyemd (https://github.com/wmayner/pyemd) - cite the papers in this page
+true_func must be callable
 """
 
 def emd(x_vals, estimated_func_vals, true_func):

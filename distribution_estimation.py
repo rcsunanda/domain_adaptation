@@ -14,7 +14,7 @@ Returns (x,y) pairs of the ecdf
 """
 
 def estimate_ecdf(samples):
-    print("estimate_ecdf; Estimating Empirical Cumulative Distribution Function - ECDF")
+    # print("estimate_ecdf; Estimating Empirical Cumulative Distribution Function - ECDF")
 
     sorted = np.sort(samples)
     ecdf = np.arange(len(sorted)) / float(len(sorted))

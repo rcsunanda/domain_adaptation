@@ -65,6 +65,29 @@ def test_k_vs_buffer_size():
 
 
 ###################################################################################################
+"""
+Subplot example
+"""
+
+metric_fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, sharex=True)
+
+def compute_metrics():
+    x = np.linspace(-3, 3, 100)
+    y1 = -2*x + 4
+    y2 = 3*x
+    y3 = x + 3
+    y4 = x**2
+
+    ax1.plot(x, y1)
+    ax2.plot(x, y2)
+    ax3.plot(x, y3)
+    ax4.plot(x, y4)
+
+    metric_fig.show()
+
+
+
+###################################################################################################
 
 # Call functions
 

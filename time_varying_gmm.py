@@ -92,8 +92,8 @@ class GaussianMixtureModel(st.rv_continuous):
 
         return_samples_list = []
 
-        print("GaussianMixtureModel::_rvs; num_batches={}; sample_count={}; batch_size={}"
-                .format(num_batches, sample_count, batch_size))
+        # print("GaussianMixtureModel::_rvs; num_batches={}; sample_count={}; batch_size={}"
+        #         .format(num_batches, sample_count, batch_size))
 
         for i in range(num_batches):
             # Select a component according to the distribution given by weights
@@ -113,12 +113,11 @@ class GaussianMixtureModel(st.rv_continuous):
         curr_sample_count = len(return_samples_list)
         if curr_sample_count < sample_count:
             remaining_sample_count = sample_count - curr_sample_count
-            print("GaussianMixtureModel::_rvs; Some more to be sampled; curr_sample_count={}; remaining_sample_count={}"
-                  .format(curr_sample_count, remaining_sample_count))
+            # print("GaussianMixtureModel::_rvs; Some more to be sampled; curr_sample_count={}; remaining_sample_count={}"
+            #       .format(curr_sample_count, remaining_sample_count))
             return_samples_list.extend(self.component_list[0].RV.rvs(size=remaining_sample_count))
 
-        print("GaussianMixtureModel::_rvs; totalSampleCount={}".format(len(return_samples_list)))
-        # print(return_samples_list)
+        # print("GaussianMixtureModel::_rvs; totalSampleCount={}".format(len(return_samples_list)))
 
         return return_samples_list
 
