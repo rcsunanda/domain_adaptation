@@ -27,6 +27,27 @@ def kl_divergence(rv_p, rv_q):
     return result
 
 
+
+###################################################################################################
+"""
+Compute approximate Kullback–Leibler divergence between a given true pdf and an estimated pdf
+true_pdf must be callable
+"""
+
+def approx_kl_divergence(x_vals, estimated_pdf_vals, true_pdf):
+
+    kl_func_vals = []   # The function to integrate
+    for x, qx in zip(x_vals, estimated_pdf_vals):
+        px = true_pdf(x)
+        func_val = px * np.log(px / qx)
+        kl_func_vals.append(func_val)
+
+    result = np.trapz(kl_func_vals, x_vals)
+
+    return result
+
+
+
 ###################################################################################################
 """
 Perform one sample Kolmogorov–Smirnov test (KS test) and return the KS statistic (D) and p-value
@@ -38,6 +59,7 @@ true_cdf must be a callable
 def one_sample_ks_test(samples, true_cdf):
     D, p = st.kstest(samples, true_cdf)
     return D, p
+
 
 
 ###################################################################################################
@@ -66,6 +88,7 @@ def manual_ks_stat(x_vals, estimated_ecdf_vals, true_cdf):
     return (current_max_x, current_max)
 
 
+
 ###################################################################################################
 """
 Return the mean squared error between an estimate and a true function
@@ -83,6 +106,7 @@ def mean_squared_error(x_vals, estimated_func_vals, true_func):
     mse = skmetrics.mean_squared_error(estimated_func_vals, true_func_vals)
 
     return mse
+
 
 
 ###################################################################################################

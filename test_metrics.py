@@ -20,16 +20,24 @@ def test_kl_divergence():
     component_params = [(1 / 3, 0, 0.5), (1 / 3, -3, 1), (1 / 3, 3, 1)]
     gmm_1 = tvgmm.GaussianMixtureModel(component_params)
 
+    x = np.linspace(-10, 10, 1000)
+    estimated_pdf_1 = gmm_1.pdf(x)
+
     kl_div_1 = metrics.kl_divergence(gmm_1, gmm_1)
-    print("kl_div_1", end=' = ')
-    print(kl_div_1)
+    approx_kl_div_1 = metrics.approx_kl_divergence(x, estimated_pdf_1, gmm_1.pdf)
+    print("kl_div_1={}, approx_kl_div_1={}".format(kl_div_1, approx_kl_div_1))
+
+    ####
 
     component_params = [(1 / 3, 1, 0.5), (1 / 3, -2, 1), (1 / 3, 4, 1)]
     gmm_2 = tvgmm.GaussianMixtureModel(component_params)
 
+    estimated_pdf_2 = gmm_2.pdf(x)
+
     kl_div_2 = metrics.kl_divergence(gmm_1, gmm_2)
-    print("kl_div_2", end=' = ')
-    print(kl_div_2)
+    approx_kl_div_2 = metrics.approx_kl_divergence(x, estimated_pdf_2, gmm_1.pdf)
+
+    print("kl_div_2={}, approx_kl_div_2={}".format(kl_div_2, approx_kl_div_2))
 
 
 
@@ -230,8 +238,8 @@ def test_emd_on_gaussian():
 
 # Call test functions
 
-# test_kl_divergence()
+test_kl_divergence()
 # test_one_sample_ks_test_on_gaussian()
 # test_one_sample_ks_test_on_gmm()
 # test_mean_squared_error_on_gaussian()
-test_emd_on_gaussian()
+# test_emd_on_gaussian()
