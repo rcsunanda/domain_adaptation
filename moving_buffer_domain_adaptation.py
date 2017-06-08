@@ -87,16 +87,16 @@ metric_emd = []
 
 def compute_metrics(cdf_x_vals, estimated_ecdf, true_cdf, pdf_xvals, estimated_pdf, true_pdf):
 
-    print("----- Computing MSE -------")
+    # print("----- Computing MSE -------")
     mse = metrics.mean_squared_error(cdf_x_vals, estimated_ecdf, true_cdf)
 
     # print("----- Computing EMD -------")
     # emd = metrics.emd(cdf_x_vals, estimated_ecdf, true_cdf)
 
-    print("----- Computing KS stat -------")
+    # print("----- Computing KS stat -------")
     x, ks_statistic = metrics.manual_ks_stat(cdf_x_vals, estimated_ecdf, true_cdf)
 
-    print("----- Computing KL divergence -------")
+    # print("----- Computing KL divergence -------")
     kl_div = metrics.approx_kl_divergence(pdf_xvals, estimated_pdf, true_pdf)
 
     metric_mse.append(mse)
@@ -125,10 +125,10 @@ Create a time varying GMM, generate samples at each time point, and estimate ecd
 Plot to visualize the true pdf, generated samples, and estimated ecdf and pdf
 """
 
-def estimate_time_varying_gmm():
-    fig = plt.figure()
+def moving_buffer_adaptation():
 
-    #ax = plt.axes(xlim=(-10, 10), ylim=(0, 1))
+    if (plot_enabled):
+        plt.figure()
 
     x = np.linspace(-10, 10, 1000)
 
@@ -141,17 +141,17 @@ def estimate_time_varying_gmm():
 
     tv_gmm = tvgmm.TimeVaryingGMM(initial_time, comp_weight_list, component_time_params)
 
-    initial_gmm = tvgmm.TimeVaryingGMM(initial_time, comp_weight_list, component_time_params)
-
-    initial_y = initial_gmm.get_current_pdf_curve(x)
-    plt.plot(x, initial_y, label='Reference pdf')
+    # initial_gmm = tvgmm.TimeVaryingGMM(initial_time, comp_weight_list, component_time_params)
+    #
+    # initial_y = initial_gmm.get_current_pdf_curve(x)
+    # plt.plot(x, initial_y, label='Reference pdf')
 
     plt.ion()
 
 
     # Create fixed size moving buffer and insert some generated samples
 
-    K = 0.5   # Memory factor [0,1]
+    K = 0.3   # Memory factor [0,1]
     buffer_size = int(1000 + 10000 * K)
     moving_buffer = np.zeros(buffer_size)
 
@@ -179,7 +179,8 @@ def estimate_time_varying_gmm():
 
         y = tv_gmm.get_current_pdf_curve(x)
 
-        pdf_plot, = plt.plot(x, y, color='red', label='Current pdf')
+        if (plot_enabled):
+            pdf_plot, = plt.plot(x, y, color='red', label='Current pdf')
 
 
         # Generate samples and update moving buffer
@@ -193,39 +194,46 @@ def estimate_time_varying_gmm():
         end = min(moving_buff_curr_sample_count, len(moving_buffer))
         current_valid_samples = moving_buffer[0:end]
 
-        bin_width = 0.2
-        bins = np.arange(min(current_valid_samples), max(current_valid_samples) + bin_width, bin_width)
-        counts, bins_s, bars = plt.hist(current_valid_samples, normed=True, histtype='stepfilled', bins=bins, alpha=0.2, color='orange', label='Moving buffer histogram')
+        if (plot_enabled):
+            # bin_width = 0.2
+            # bins = np.arange(min(current_valid_samples), max(current_valid_samples) + bin_width, bin_width)
+            # counts, bins_s, bars = plt.hist(current_valid_samples, normed=True, histtype='stepfilled', bins=bins, alpha=0.2,
+            #                                 color='orange', label='Moving buffer histogram')
+
+            bin_width = 0.2
+            bins = np.arange(min(new_samples), max(new_samples) + bin_width, bin_width)
+            counts, bins_s, bars = plt.hist(new_samples, normed=True, histtype='stepfilled', bins=bins, alpha=0.2,
+                                            color='orange', label='New samples histogram')
 
         # utility.dump_data_to_csv("moving_buffer_iter_{}".format(frame), current_valid_samples)
 
         # Estimate and plot ecdf and pdf
 
         sorted, ecdf = est.estimate_ecdf(current_valid_samples)
-        ecdf_plot, = plt.plot(sorted, ecdf, color='purple', label="estimated-ecdf")
 
         new_x, estimated_pdf = est.estimate_pdf(sorted, ecdf)
-        derivatives_plot, = plt.plot(new_x, estimated_pdf, color='green', label="estimated-pdf")
-
-        #######
 
         compute_metrics(sorted, ecdf, tv_gmm.gmm.cdf, new_x, estimated_pdf, tv_gmm.gmm.pdf)
 
-        #######
+        if (plot_enabled):
+            ecdf_plot, = plt.plot(sorted, ecdf, color='purple', label="estimated-ecdf")
+            derivatives_plot, = plt.plot(new_x, estimated_pdf, color='green', label="estimated-pdf")
 
-        plt.legend(loc='upper right')
-        plt.xlabel('x')
-        plt.pause(0.0001)
+            plt.legend(loc='upper right')
+            plt.xlabel('x')
+            plt.pause(0.0001)
 
-        # input("Press Enter to continue...")
+            # input("Press Enter to continue...")
 
-        # Remove plots of current time point
-        pdf_plot.remove()
-        ecdf_plot.remove()
-        derivatives_plot.remove()
-        _ = [b.remove() for b in bars]  # Remove histogram
+            # Remove plots of current time point
+            pdf_plot.remove()
+            ecdf_plot.remove()
+            derivatives_plot.remove()
+            _ = [b.remove() for b in bars]  # Remove histogram
+
 
     plt.ioff()
+
     plot_metrics()
 
 
@@ -235,4 +243,6 @@ def estimate_time_varying_gmm():
 # Call functions
 
 # test_update_moving_buffer()
-estimate_time_varying_gmm()
+
+plot_enabled = False
+moving_buffer_adaptation()
