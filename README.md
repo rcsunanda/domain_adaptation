@@ -1,4 +1,4 @@
 # Description
 Research problem:
-Develop a method to adapt a learned model (eg: classifier, generative model) to a changing (dynamic) data distribution
+develop a method to adapt a learned model (eg: generative model, classifier) to a changing (dynamic) data distribution
 
