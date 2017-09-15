@@ -2,13 +2,14 @@
 Tests for statistical distance metric functions
 """
 
-import time_varying_gmm as tvgmm
-import metrics
+import domain_adaptation.initial_domain_adaptation.time_varying_gmm as tvgmm
+import domain_adaptation.initial_domain_adaptation.metrics as metrics
+import domain_adaptation.initial_domain_adaptation.distribution_estimation as est
+import domain_adaptation.utility as utility
+
 import scipy.stats as st
 import numpy as np
 import matplotlib.pyplot as plt
-import distribution_estimation as est
-
 
 
 ###################################################################################################

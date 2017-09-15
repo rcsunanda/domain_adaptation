@@ -8,9 +8,9 @@ import os
 os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 os.environ['FOR_IGNORE_EXCEPTIONS'] = '1'
 
+import domain_adaptation.initial_domain_adaptation.time_varying_gmm as tvgmm
+import domain_adaptation.initial_domain_adaptation.metrics as metrics
 
-import time_varying_gmm as tvgmm
-import metrics
 import numpy as np
 import matplotlib.pyplot as plt
 import time as time_module

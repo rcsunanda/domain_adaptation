@@ -2,7 +2,8 @@
 Tests utility functions
 """
 
-import utility
+# from domain_adaptation import utility
+import domain_adaptation.utility as utility
 
 
 

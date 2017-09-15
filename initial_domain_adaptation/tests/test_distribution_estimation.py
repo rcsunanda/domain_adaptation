@@ -2,9 +2,9 @@
 Tests for estimate_ecdf(), estimate_pdf()
 """
 
+import domain_adaptation.initial_domain_adaptation.time_varying_gmm as tvgmm
+import domain_adaptation.initial_domain_adaptation.distribution_estimation as est
 
-import distribution_estimation as est
-import time_varying_gmm as tvgmm
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as st
