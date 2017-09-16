@@ -18,7 +18,7 @@ class Process:
     def __init__(self, num_dimensions, num_classes, class_distribution_parameters):
         self.num_dimensions = num_dimensions
         self.num_classes = num_classes
-        self.distributions = [] # class conditional data distributions P(X|y)
+        self.distributions = [] # Class conditional data distributions P(X|y)
 
         assert (len(class_distribution_parameters) == num_classes)
 
@@ -39,7 +39,7 @@ class Process:
 
 
     def generate_data_points(self, label, count):
-        # labels are 0-based
+        # Labels are 0-based
 
         # Sample from relevant P(X|label)
         dist = self.distributions[label]
