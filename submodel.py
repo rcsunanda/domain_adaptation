@@ -2,10 +2,6 @@
 Submodel class
 """
 
-# import domain_adaptation.data_point as data_point
-#
-# import scipy.stats as st
-
 
 ###################################################################################################
 """
