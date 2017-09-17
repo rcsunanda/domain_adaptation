@@ -5,6 +5,7 @@ Process class
 import domain_adaptation.data_point as data_point
 
 import scipy.stats as st
+import numpy as np
 
 
 ###################################################################################################
@@ -44,6 +45,8 @@ class Process:
         # Sample from relevant P(X|label)
         dist = self.distributions[label]
         samples = dist.rvs(size=count)
+
+        samples = np.reshape(samples, (count, self.num_dimensions)) # Actually only needed in the self.num_dimensions = 1 case
 
         data_points = [data_point.DataPoint(X, label, -1) for X in samples]
 

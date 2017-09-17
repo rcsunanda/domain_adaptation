@@ -138,3 +138,5 @@ def emd(x_vals, estimated_func_vals, true_func):
     emd = pyemd.emd(estimated_func_vals, true_func_vals, distance_matrix)   # Expensive computation
 
     return emd
+
+

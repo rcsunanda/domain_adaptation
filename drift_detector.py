@@ -45,4 +45,6 @@ class DriftDetector:
         window_1 = self.data_point_sequence[window_1_left_bound: window_2_left_bound]
         window_2 = self.data_point_sequence[window_2_left_bound: ]
 
+        # diff =
+
         return
