@@ -69,7 +69,7 @@ def test_abrupt_drift_detection():
     # Emulate a data point sequence
     seq_no = []
     expected_drift_seq = []
-    detection_batch_size = 10
+    detection_batch_size = 50   # 10 is a good value
     for index, point in enumerate(data_points):
         drift_detector.add_data_points([point])
 
@@ -91,7 +91,7 @@ def test_abrupt_drift_detection():
 
     # Scale expected drift values to compare with actual drift values
     peak_actual_drift = max(drift_detector.diff_sequence)
-    expected_drift_seq = expected_drift_seq * peak_actual_drift
+    expected_drift_seq = [val * peak_actual_drift for val in expected_drift_seq]
 
     plt.plot(seq_no, drift_detector.diff_sequence, label='actual_drift')
     plt.plot(seq_no, expected_drift_seq, label='expected_drift')

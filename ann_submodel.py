@@ -12,9 +12,11 @@ ANN_Submodel is a concrete submodel derived from above Submodel class (an artifi
 """
 
 class ANN_Submodel(sm.Submodel):
-    def __init__(self):
+    def __init__(self, weight, pdf):
         # solver=lbfgs is good for small datasets
         # solver=adam is good for large datasets
+
+        sm.Submodel.__init__(self, weight, pdf)
 
         self.classfier = ann.MLPClassifier(solver='lbfgs', alpha=1e-5,
                                            hidden_layer_sizes=(5, 2), random_state=1)
@@ -35,11 +37,7 @@ class ANN_Submodel(sm.Submodel):
 
 
     def predict(self, data_points):
-        X_test = []
-
-        for point in data_points:
-            X_test.append(point.X)
-
+        X_test = [point.X for point in data_points]
         predicted_y = self.classfier.predict(X_test)
         predicted_class_probs = self.classfier.predict_proba(X_test)
 
