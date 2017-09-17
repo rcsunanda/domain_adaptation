@@ -2,9 +2,50 @@
 DriftDetector class
 """
 
-# import domain_adaptation.data_point as data_point
-#
-# import scipy.stats as st
+import domain_adaptation.distribution_difference as ddif
+
+import numpy as np
+
+
+###################################################################################################
+"""
+Given two windows of DataPoints, convert them to windows of samples (vectors)
+Also, find the [min, max] bounds for each dimension in the two windows
+Return tuple (window_1_samples, window_2_samples, bounds)
+"""
+
+def prepare_sample_windows(window_1, window_2):
+
+    dimensions = len(window_1[0].X)
+    min_vals = [+np.inf for i in range(dimensions)]
+    max_vals = [-np.inf for i in range(dimensions)]
+
+    def set_min_max_vals(sample):
+        for index, feature_val in enumerate(sample):
+            if (sample[index] < min_vals[index]):
+                min_vals[index] = sample[index]
+            if (sample[index] > max_vals[index]):
+                max_vals[index] = sample[index]
+
+
+    window_1_samples = []
+    for point in window_1:
+        sample = point.X
+        window_1_samples.append(sample)
+        set_min_max_vals(sample)
+
+    window_2_samples = []
+    for point in window_2:
+        sample = point.X
+        window_2_samples.append(sample)
+        set_min_max_vals(sample)
+
+    bounds = []
+    for i in range(dimensions):
+        bounds.append((min_vals[i], max_vals[i]))
+
+    return (window_1_samples, window_2_samples, bounds)
+
 
 
 ###################################################################################################
@@ -17,6 +58,8 @@ This difference is summed, and when it increases above a threshold, it is consid
 class DriftDetector:
     def __init__(self, window_size):
         self.data_point_sequence = []
+
+        self.diff_sequence = []  # Temporary; for debugging
 
         self.window_size = window_size
         #self.current_diff = 0   # may not need to be a memeber
@@ -37,6 +80,8 @@ class DriftDetector:
 
         # Not enough data points for two windows
         if (sequence_size < 2 * self.window_size):
+            diff = 0
+            self.diff_sequence.append(diff)
             return (False, 0, 0)
 
         window_2_left_bound = sequence_size - self.window_size
@@ -45,6 +90,13 @@ class DriftDetector:
         window_1 = self.data_point_sequence[window_1_left_bound: window_2_left_bound]
         window_2 = self.data_point_sequence[window_2_left_bound: ]
 
-        # diff =
+        (window_1_samples, window_2_samples, bounds) = prepare_sample_windows(window_1, window_2)
+
+        kde_estimator_1 = ddif.estimate_pdf_kde(window_1_samples)
+        kde_estimator_2 = ddif.estimate_pdf_kde(window_2_samples)
+
+        diff = ddif.total_variation_distance(kde_estimator_1, kde_estimator_2, bounds)
+
+        self.diff_sequence.append(diff)
 
         return

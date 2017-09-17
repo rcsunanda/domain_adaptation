@@ -3,6 +3,7 @@ Tests for methods in distribution_difference
 """
 
 import domain_adaptation.distribution_difference as ddif
+import domain_adaptation.drift_detector as dd
 import domain_adaptation.process as prc
 
 
@@ -114,9 +115,9 @@ def test_total_variation_distance():
     print(process)
 
     # Generate data
-    data_points1 = process.generate_data_points(label=0, count=1000)
-    data_points2 = process.generate_data_points(label=0, count=1000)
-    data_points3 = process.generate_data_points(label=1, count=1000)
+    data_points1 = process.generate_data_points(label=0, count=500)
+    data_points2 = process.generate_data_points(label=0, count=500)
+    data_points3 = process.generate_data_points(label=1, count=500)
 
     X_dataset1 = [point.X for point in data_points1]
     X_dataset2 = [point.X for point in data_points2]
@@ -127,12 +128,30 @@ def test_total_variation_distance():
     kde_estimator2 = ddif.estimate_pdf_kde(X_dataset2)
     kde_estimator3 = ddif.estimate_pdf_kde(X_dataset3)
 
-    # Compute difference between distributions
-    diff1 = ddif.total_variation_distance(kde_estimator1, kde_estimator2, [[-3, +3], [-3, +3]])
-    diff2 = ddif.total_variation_distance(kde_estimator1, kde_estimator3, [[-3, +7], [-3, +7]])
+    (w1, w2, bounds1) = dd.prepare_sample_windows(data_points1, data_points2)
+    (w1, w2, bounds2) = dd.prepare_sample_windows(data_points1, data_points3)
 
-    print("mc_integral_1={}".format(diff1))
-    print("mc_integral_2={}".format(diff2))
+    # Compute difference between distributions (multiple times)
+
+    diff_list_1 = []
+    diff_list_2 = []
+
+    for i in range (50):
+        diff1 = ddif.total_variation_distance(kde_estimator1, kde_estimator2, bounds1)
+        diff2 = ddif.total_variation_distance(kde_estimator1, kde_estimator3, bounds2)
+
+        diff_list_1.append(diff1)
+        diff_list_2.append(diff2)
+
+        if (i % 5 == 0):
+            print("index={}".format(i))
+
+    # Plot
+    plt.plot(diff_list_1, label='diff_1_2 - same label')
+    plt.plot(diff_list_2, label='diff_1_3 - different labels')
+    plt.legend(loc='upper right')
+    plt.ylabel('diff')
+    plt.show()
 
 
 
@@ -140,10 +159,10 @@ def test_total_variation_distance():
 
 # Call test functions
 
-test_estimate_1d_pdf_kde()
-test_estimate_2d_pdf_kde()
+# test_estimate_1d_pdf_kde()
+# test_estimate_2d_pdf_kde()
 
 time = timeit.timeit(test_total_variation_distance, number=1)
-print ("time={}".format(time))
+# print ("time={}".format(time))
 # test_total_variation_distance()
 

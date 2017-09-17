@@ -81,6 +81,6 @@ def total_variation_distance(kde1, kde2, bounds):
     # print("quad_integral={}".format(quad_integral))
 
     mc_integral = mc_integrate(diff_func, sampler(), n=1000)
-    mc_integral = mc_integral/2
+    mc_integral = mc_integral[0]/2
 
     return mc_integral
