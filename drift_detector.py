@@ -1,5 +1,5 @@
 """
-DriftDetector class
+DriftDetector class and required functions
 """
 
 import domain_adaptation.distribution_difference as ddif
@@ -99,4 +99,4 @@ class DriftDetector:
 
         self.diff_sequence.append(diff)
 
-        return
+        return (False, diff, self.diff_sum)
