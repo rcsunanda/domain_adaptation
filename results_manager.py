@@ -2,10 +2,8 @@
 ResultsManager class
 """
 
-import domain_adaptation.distribution_difference as ddif
-import domain_adaptation.ann_submodel as ann_sm
+import matplotlib.pyplot as plt
 
-import numpy as np
 
 
 ###################################################################################################
@@ -110,3 +108,25 @@ class ResultsManager:
         print("window_error_count_seq={}".format(self.window_error_count_seq))
         print("window_avg_error_seq={}".format(self.window_avg_error_seq))
         print("detection_points_seq={}".format(self.detection_points_seq))
+
+
+    def plot_results(self):
+        plt.figure(1)
+
+        x = [pair[0] for pair in self.diff_seq]
+        y = [pair[1] for pair in self.diff_seq]
+        plt.plot(x, y, label='diff_seq')
+
+        x = [pair[0] for pair in self.diff_sum_seq]
+        y = [pair[1] for pair in self.diff_sum_seq]
+        plt.plot(x, y, label='diff_sum_seq')
+
+        plt.figure(2)
+
+        x = [pair[0] for pair in self.window_avg_error_seq]
+        y = [pair[1] for pair in self.window_avg_error_seq]
+        plt.plot(x, y, label='window_avg_error_seq')
+
+        plt.legend(loc='upper right')
+        plt.show()
+

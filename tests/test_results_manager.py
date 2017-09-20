@@ -51,6 +51,9 @@ def test_results_manager():
         if (index % 20 == 0):
             results_manager.print_results()
 
+    results_manager.plot_results()
+
+
 
 ###################################################################################################
 
