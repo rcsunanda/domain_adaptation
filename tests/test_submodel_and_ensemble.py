@@ -3,7 +3,7 @@ Tests for Submodel, ANN_Submodel and other derived classes
 """
 
 import domain_adaptation.ann_submodel as ann_sm
-import domain_adaptation.model_ensemble as ensemble
+import domain_adaptation.model_ensemble as ens
 import domain_adaptation.process as prc
 
 import matplotlib.pyplot as plt
@@ -92,10 +92,10 @@ def test_ensemble_prediction():
 
     ann_submodel_1 = ann_sm.ANN_Submodel(weight=1, pdf=None)
     ann_submodel_2 = ann_sm.ANN_Submodel(weight=1, pdf=None)
-    ensebmle = ensemble.ModelEnsmeble()
+    ensemble = ens.ModelEnsmeble()
     print("ann_submodel_1={}".format(ann_submodel_1))
     print("ann_submodel_2={}".format(ann_submodel_2))
-    print("ensebmle={}".format(ensebmle))
+    print("ensemble={}".format(ensemble))
 
 
     # Setup 2 processes (class distributions are flipped)
@@ -139,13 +139,13 @@ def test_ensemble_prediction():
     ann_submodel_1.train(training_data_1)
     ann_submodel_2.train(training_data_2)
 
-    ensebmle.add_submodel(ann_submodel_1)
-    ensebmle.add_submodel(ann_submodel_2)
+    ensemble.add_submodel(ann_submodel_1)
+    ensemble.add_submodel(ann_submodel_2)
 
     # Test ANN_Submodels and the ensemble seperately and report results
     predict_and_print_results(ann_submodel_1, test_data, "test_ensemble_prediction: ann_submodel_1")
     predict_and_print_results(ann_submodel_2, test_data, "test_ensemble_prediction: ann_submodel_2")
-    predict_and_print_results(ensebmle, test_data, "test_ensemble_prediction: ensebmle")
+    predict_and_print_results(ensemble, test_data, "test_ensemble_prediction: ensemble")
 
 
 

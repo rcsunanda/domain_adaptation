@@ -22,7 +22,9 @@ class ANN_Submodel(sm.Submodel):
                                            hidden_layer_sizes=(5, 2), random_state=1)
 
     def __repr__(self):
-        return "ANN_Submodel(\n\tclassfier={} \n)".format(self.classfier)
+        base_class_str = sm.Submodel.__repr__(self)
+        child_class_str = "ANN_Submodel(\n\tclassfier={} \n)".format(self.classfier)
+        return base_class_str + child_class_str
 
 
     def train(self, data_points):

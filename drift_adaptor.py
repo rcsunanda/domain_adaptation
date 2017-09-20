@@ -24,12 +24,12 @@ def create_submodel():
 Given a window of samples, compute the bounds/ region of its values
 """
 
-def compute_window_bounds(window_1_samples):
-    dimensions = len(window_1_samples[0])
+def compute_window_bounds(window_samples):
+    dimensions = len(window_samples[0])
     min_vals = [+np.inf for i in range(dimensions)]
     max_vals = [-np.inf for i in range(dimensions)]
 
-    for sample in window_1_samples:
+    for sample in window_samples:
         for index, feature_val in enumerate(sample):
             if (sample[index] < min_vals[index]):
                 min_vals[index] = sample[index]
@@ -83,12 +83,12 @@ class DriftAdaptor:
         new_submodel = create_submodel()
         new_submodel.train(data_point_window)
 
-        window_1_samples = [point.X for point in data_point_window]
-        kde_estimator = ddif.estimate_pdf_kde(window_1_samples)
+        window_samples = [point.X for point in data_point_window]
+        kde_estimator = ddif.estimate_pdf_kde(window_samples)
 
         new_submodel.weight = 1
         new_submodel.pdf = kde_estimator
-        new_submodel.window_bounds = compute_window_bounds(window_1_samples)
+        new_submodel.window_bounds = compute_window_bounds(window_samples)
 
         self.ensemble.add_submodel(new_submodel)
 
@@ -99,5 +99,9 @@ class DriftAdaptor:
         for submodel in self.ensemble.submodels:
             overall_bounds = compute_overall_bounds(window_bounds, submodel.window_bounds)
             diff = ddif.total_variation_distance(kde_estimator, submodel.pdf, overall_bounds)
-            submodel.weight = 1/diff
-        pass
+
+            submodel.weight = 1 - diff
+            assert submodel.weight >= 0 and  submodel.weight <= 1
+
+            # if (diff != 0): # Need to check because for current (new) submodel, diff will likely be 0
+            #     submodel.weight = 1/diff
