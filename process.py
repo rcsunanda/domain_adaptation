@@ -33,6 +33,9 @@ class Process:
 
     def set_class_distribution_params(self, class_distribution_parameters):
         # class_distribution_parameters is a list of (mean, cov) tuples for Gaussian data distribution P(X|y) of each class
+
+        self.distributions = []
+
         for param_set in class_distribution_parameters:
             mean = param_set[0]
             cov = param_set[1]

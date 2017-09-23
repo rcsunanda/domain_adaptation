@@ -189,7 +189,7 @@ class SystemCoordinator:
 
                 if (is_drift_detected == True):
                     latest_window = self.detector.get_latest_window()
-                    # self.adaptor.adapt_ensemble(latest_window)
+                    self.adaptor.adapt_ensemble(latest_window)
 
             self.set_process_parameters(total_samples)
 
