@@ -13,7 +13,7 @@ It can then be called to print/ plot the collected results
 """
 
 class ResultsManager:
-    def __init__(self):
+    def __init__(self, avg_error_window_size):
         self.window_error_count_seq = []
         self.window_avg_error_seq = []
         self.detection_points_seq = []  # Sequence numbers when a drift was detected (is a 1/0 seq more suitable for this)
@@ -27,7 +27,7 @@ class ResultsManager:
         self.sample_count_since_last_detection = 0
         self.error_count_since_last_detection = 0
 
-        self.window_size = 100    # Size of window to compute running average error
+        self.window_size = avg_error_window_size    # Size of window to compute running average error
         self.window_sample_count = 0    # No. of samples in current windows
         self.errors_in_window = 0
 
@@ -121,11 +121,18 @@ class ResultsManager:
         y = [pair[1] for pair in self.diff_sum_seq]
         plt.plot(x, y, label='diff_sum_seq')
 
+        for x in self.detection_points_seq:
+            plt.axvline(x, color='c', linestyle='--', linewidth=0.5)
+
+
         plt.figure(2)
 
         x = [pair[0] for pair in self.window_avg_error_seq]
         y = [pair[1] for pair in self.window_avg_error_seq]
         plt.plot(x, y, label='window_avg_error_seq')
+
+        for x in self.detection_points_seq:
+            plt.axvline(x, color='c', linestyle='--', linewidth=0.5)
 
         plt.legend(loc='upper right')
         plt.show()
