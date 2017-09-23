@@ -63,7 +63,7 @@ def test_abrupt_drift_detection():
     # Generate data
     count=4000
     midpoint=int(count/2)
-    data_points = process.generate_data_points_from_all_labels(total_count=count)
+    data_points = process.generate_data_points_from_all_labels(total_count=count)   # First half from label=0, second half from label=1
 
     # Emulate a data point sequence
     seq_no = []
@@ -88,11 +88,14 @@ def test_abrupt_drift_detection():
 
             print("index={}".format(index))
 
+    print("detector={}".format(drift_detector))
+
     # Scale expected drift values to compare with actual drift values
     peak_actual_drift = max(drift_detector.diff_sequence)
     expected_drift_seq = [val * peak_actual_drift for val in expected_drift_seq]
 
     plt.plot(seq_no, drift_detector.diff_sequence, label='actual_drift')
+    plt.plot(seq_no, drift_detector.diff_sum_sequence, label='actual_diff_sum')
     plt.plot(seq_no, expected_drift_seq, label='expected_drift')
     plt.legend(loc='upper right')
     plt.ylabel('diff')
