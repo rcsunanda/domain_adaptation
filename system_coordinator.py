@@ -127,10 +127,12 @@ class SystemCoordinator:
 
         initial_training_dataset = self.process.generate_data_points_from_all_labels(self.initial_dataset_size)
 
-        initial_submodel = da.create_submodel(self.submodel_type)
-        initial_submodel.train(initial_training_dataset)
+        self.adaptor.adapt_ensemble(initial_training_dataset)
 
-        self.ensemble.add_submodel(initial_submodel)
+        # initial_submodel = da.create_submodel(self.submodel_type)
+        # initial_submodel.train(initial_training_dataset)
+        #
+        # self.ensemble.add_submodel(initial_submodel)
 
 
         # Generate some test data and check initial_model results
@@ -190,6 +192,8 @@ class SystemCoordinator:
                 if (is_drift_detected == True):
                     latest_window = self.detector.get_latest_window()
                     self.adaptor.adapt_ensemble(latest_window)
+                    print("Drift detected: adapted ensemble: submodel_count={} \nensemble={}"
+                          .format(len(self.ensemble.submodels), self.ensemble))
 
             self.set_process_parameters(total_samples)
 
