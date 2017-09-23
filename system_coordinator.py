@@ -22,6 +22,7 @@ class SystemParameters:
         self.process_num_dimensions = None
         self.process_num_classes = None
         self.process_class_distribution_parameters = None
+        self.process_class_distribution_parameters_2 = None
 
         self.detector_window_size = None
 
@@ -31,15 +32,18 @@ class SystemParameters:
 
         self.system_coordinator_initial_dataset_size = None
         self.system_coordinator_total_sequence_size = None
+        self.system_coordinator_drift_scenario = None
 
 
     def __repr__(self):
         return "SystemParameters(\n\tprocess_num_dimensions={} \n\tprocess_num_classes={} \n\t" \
-               "process_class_distribution_parameters={} \n\tdetector_window_size={} \n\t" \
-               "results_manager_avg_error_window_size={} \n\tsystem_coordinator_initial_dataset_size={} \n)"\
+               "process_class_distribution_parameters={} \n\t process_class_distribution_parameters_2={} \n\t detector_window_size={} \n\t" \
+               "results_manager_avg_error_window_size={} \n\tsystem_coordinator_initial_dataset_size={} \n\t" \
+               "system_coordinator_drift_scenario={} \n)"\
             .format(self.process_num_dimensions, self.process_num_classes,
-                    self.process_class_distribution_parameters, self.detector_window_size,
-                    self.results_manager_avg_error_window_size, self.system_coordinator_initial_dataset_size)
+                    self.process_class_distribution_parameters, self.process_class_distribution_parameters_2, self.detector_window_size,
+                    self.results_manager_avg_error_window_size, self.system_coordinator_initial_dataset_size,
+                    self.system_coordinator_drift_scenario)
 
 
 
@@ -78,6 +82,7 @@ class SystemCoordinator:
             sys_params.process_num_classes,
             sys_params.process_class_distribution_parameters)
 
+
         self.ensemble = ens.ModelEnsmeble()
 
         self.detector = dd.DriftDetector(sys_params.detector_window_size)
@@ -88,11 +93,33 @@ class SystemCoordinator:
         self.initial_dataset_size = sys_params.system_coordinator_initial_dataset_size
         self.total_sequence_size = sys_params.system_coordinator_total_sequence_size
         self.submodel_type = sys_params.adaptor_submodel_type
+        self.drift_scenario = sys_params.system_coordinator_drift_scenario
+
+        # For "Abrupt_Drift" drift scenario
+        self.process_class_distribution_parameters_2 = sys_params.process_class_distribution_parameters_2
+        self.was_drift_occured = False  # To ensure we set the second set of process parameters only once
 
 
     def __repr__(self):
         return "SystemCoordinator(\n\tprocess={} \n\tensemble={} \n\tdetector={} \n\tadaptor={} \n\tresults_manager={} \n)"\
             .format(self.process, self.ensemble, self.detector, self.adaptor, self.results_manager)
+
+
+    # Given the current seq no, set time varying process parameters
+    def set_process_parameters(self, seq):
+        if (self.drift_scenario == "Abrupt_Drift"):
+            if (self.was_drift_occured == False and seq >= self.total_sequence_size/2):
+                print("Abrupt_Drift scenario: changing process parameters to second set")
+                self.process.set_class_distribution_params(self.process_class_distribution_parameters_2)
+                print(self.process)
+                self.was_drift_occured = True
+
+        elif (self.drift_scenario == "Gradual_Drift"):
+            assert False
+        elif (self.drift_scenario == "Recurring_Context"):
+            assert False
+        else:
+            assert False
 
 
     # Generate an initial training dataset, train a submodel, and add it to the ensemble
@@ -126,14 +153,16 @@ class SystemCoordinator:
 
         # parameterize
         batch_size = 10
-        print_interval = 1000
+        info_print_interval = 2000
+        progress_print_interval = 100
         detection_batch_size = 10
 
 
         total_samples = 0
         res_manager_seq_num = self.initial_dataset_size - 1 # Because a result set was added in train_initial_model
 
-        print_counter = 0
+        info_print_counter = 0
+        progress_print_counter = 0
         detection_counter = 0
 
         while(True):
@@ -141,7 +170,8 @@ class SystemCoordinator:
             total_samples += batch_size
             res_manager_seq_num += batch_size
 
-            print_counter += batch_size
+            info_print_counter += batch_size
+            progress_print_counter += batch_size
             detection_counter += batch_size
 
             if (total_samples > self.total_sequence_size):
@@ -153,18 +183,25 @@ class SystemCoordinator:
 
             if (detection_counter > detection_batch_size):  # Run detection after a batch of samples has been added
                 detection_counter = 0
+                self.detector.add_data_points(batch)
                 (is_drift_detected, diff, diff_sum) = self.detector.run_detection()
                 self.results_manager.add_detection_info(total_samples, diff, diff_sum, is_drift_detected)
 
                 if (is_drift_detected == True):
                     latest_window = self.detector.get_latest_window()
-                    self.adaptor.adapt_ensemble(latest_window)
+                    # self.adaptor.adapt_ensemble(latest_window)
 
-            if (print_counter > print_interval):
-                print_counter = 0
+            self.set_process_parameters(total_samples)
+
+            if (info_print_counter > info_print_interval):
+                info_print_counter = 0
                 self.results_manager.print_results()
 
+            if (progress_print_counter > progress_print_interval):
+                progress_print_counter = 0
+                print("total_samples={}".format(total_samples))
 
+        print(self.detector)
         self.results_manager.plot_results()
 
 

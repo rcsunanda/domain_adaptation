@@ -124,6 +124,7 @@ class ResultsManager:
         for x in self.detection_points_seq:
             plt.axvline(x, color='c', linestyle='--', linewidth=0.5)
 
+        plt.legend(loc='upper right')
 
         plt.figure(2)
 

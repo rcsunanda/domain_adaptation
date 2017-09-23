@@ -117,7 +117,7 @@ def test_total_variation_distance():
     # Generate data
     data_points1 = process.generate_data_points(label=0, count=500)
     data_points2 = process.generate_data_points(label=0, count=500)
-    data_points3 = process.generate_data_points(label=1, count=500)
+    data_points3 = process.generate_data_points(label=1, count=500) # From different label
 
     X_dataset1 = [point.X for point in data_points1]
     X_dataset2 = [point.X for point in data_points2]

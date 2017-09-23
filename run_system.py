@@ -34,6 +34,23 @@ def main():
     sys_parameters.process_num_classes = 2
     sys_parameters.process_class_distribution_parameters = gauss_params
 
+    # Second set of process paramers (to set after abrupt drift)
+
+    gauss_params = []
+
+    # class 1 Gaussian distribution params
+    mean_1 = [0, 3]
+    cov_1 = [[1, 0], [0, 1]]
+
+    # class 2 Gaussian distribution params
+    mean_2 = [3, 0]
+    cov_2 = [[1, 0], [0, 1]]
+
+    gauss_params.append((mean_1, cov_1))
+    gauss_params.append((mean_2, cov_2))
+
+    sys_parameters.process_class_distribution_parameters_2 = gauss_params
+
 
     # Other parameters
 
@@ -44,7 +61,8 @@ def main():
     sys_parameters.results_manager_avg_error_window_size = 50
 
     sys_parameters.system_coordinator_initial_dataset_size = 1000
-    sys_parameters.system_coordinator_total_sequence_size = 10000
+    sys_parameters.system_coordinator_total_sequence_size = 4000
+    sys_parameters.system_coordinator_drift_scenario = "Abrupt_Drift"
 
     print("System parameters are set: \n{}".format(sys_parameters))
 

@@ -24,20 +24,24 @@ class Process:
 
         assert (len(class_distribution_parameters) == num_classes)
 
+        self.set_class_distribution_params(class_distribution_parameters)
+
+
+    def __repr__(self):
+        return "Process(\n\tnum_dimensions={} \n\tnum_classes={} \n\tclass_distributions={} \n)".format(self.num_dimensions, self.num_classes, self.distributions)
+
+
+    def set_class_distribution_params(self, class_distribution_parameters):
         # class_distribution_parameters is a list of (mean, cov) tuples for Gaussian data distribution P(X|y) of each class
         for param_set in class_distribution_parameters:
             mean = param_set[0]
             cov = param_set[1]
 
-            assert (len(mean) == num_dimensions)
-            assert (len(cov) == num_dimensions)
-            assert (len(cov[0]) == num_dimensions)
+            assert (len(mean) == self.num_dimensions)
+            assert (len(cov) == self.num_dimensions)
+            assert (len(cov[0]) == self.num_dimensions)
 
             self.distributions.append(st.multivariate_normal(mean=mean, cov=cov))
-
-
-    def __repr__(self):
-        return "Process(\n\tnum_dimensions={} \n\tnum_classes={} \n\tclass_distributions={} \n)".format(self.num_dimensions, self.num_classes, self.distributions)
 
 
     # Generate given count of DataPoints from given label
