@@ -72,7 +72,7 @@ Call DriftAdaptor.adapt_ensemble for 2 new DataPoint windows (from 2 processes) 
 
 def test_adaptation():
     ensemble = ens.ModelEnsmeble()
-    adaptor = da.DriftAdaptor(ensemble)
+    adaptor = da.DriftAdaptor(ensemble, "ANN_Submodel")
 
     print(adaptor)
 

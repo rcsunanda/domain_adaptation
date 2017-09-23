@@ -19,7 +19,7 @@ class ANN_Submodel(sm.Submodel):
         sm.Submodel.__init__(self, weight, pdf)
 
         self.classfier = ann.MLPClassifier(solver='lbfgs', alpha=1e-5,
-                                           hidden_layer_sizes=(5, 2), random_state=1)
+                                           hidden_layer_sizes=(5, 4, 3), random_state=1)
 
     def __repr__(self):
         base_class_str = sm.Submodel.__repr__(self)

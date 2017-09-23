@@ -105,8 +105,8 @@ class ResultsManager:
         print("current_seq={}, last_window_avg_error={}%, avg_error_since_last_detection={}%, total_avg_error={}%".
               format(self.current_seq, last_window_avg_error, avg_error_since_last_detection, total_avg_error))
 
-        print("window_error_count_seq={}".format(self.window_error_count_seq))
-        print("window_avg_error_seq={}".format(self.window_avg_error_seq))
+        # print("window_error_count_seq={}".format(self.window_error_count_seq))
+        # print("window_avg_error_seq={}".format(self.window_avg_error_seq))
         print("detection_points_seq={}".format(self.detection_points_seq))
 
 

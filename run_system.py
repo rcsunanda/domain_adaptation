@@ -37,9 +37,13 @@ def main():
 
     # Other parameters
 
+    sys_parameters.adaptor_submodel_type = "ANN_Submodel"
+
     sys_parameters.detector_window_size = 500
 
-    sys_parameters.results_manager_avg_error_window_size = 10
+    sys_parameters.results_manager_avg_error_window_size = 50
+
+    sys_parameters.system_coordinator_initial_dataset_size = 1000
 
     print("System parameters are set: \n{}".format(sys_parameters))
 
