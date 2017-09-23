@@ -100,3 +100,10 @@ class DriftDetector:
         self.diff_sequence.append(diff)
 
         return (False, diff, self.diff_sum)
+
+
+    def get_latest_window(self):
+        left_bound = len(self.data_point_sequence) - self.window_size
+        latest_window = self.data_point_sequence[left_bound: ]
+        return latest_window
+    

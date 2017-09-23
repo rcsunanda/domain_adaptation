@@ -131,6 +131,12 @@ class ResultsManager:
         y = [pair[1] for pair in self.window_avg_error_seq]
         plt.plot(x, y, label='window_avg_error_seq')
 
+        total_avg_error = 0
+        if (self.total_sample_count > 0):
+            total_avg_error = self.total_error_count / self.total_sample_count
+
+        plt.axhline(total_avg_error, label='total_avg_error', color='k', linestyle='--', linewidth=0.5)
+
         for x in self.detection_points_seq:
             plt.axvline(x, color='c', linestyle='--', linewidth=0.5)
 

@@ -116,15 +116,55 @@ class SystemCoordinator:
 
         # Add to results manager
 
-        self.results_manager.add_prediction_result(len(test_data), test_data)
-
+        self.results_manager.add_prediction_result(len(test_data), test_data)   # First set of results added to results manager
         self.results_manager.print_results()
-        self.results_manager.plot_results()
-        # self.results_manager.add_prediction_result(index, batch)
+        # self.results_manager.plot_results()
 
 
     def run(self):
         self.train_initial_model()
 
-        # for index in range(self.total_sequence_size):
-        #     batch = self.process.generate_data_points()
+        # parameterize
+        batch_size = 10
+        print_interval = 1000
+        detection_batch_size = 10
+
+
+        total_samples = 0
+        res_manager_seq_num = self.initial_dataset_size - 1 # Because a result set was added in train_initial_model
+
+        print_counter = 0
+        detection_counter = 0
+
+        while(True):
+            batch = self.process.generate_data_points_from_all_labels(total_count=batch_size)
+            total_samples += batch_size
+            res_manager_seq_num += batch_size
+
+            print_counter += batch_size
+            detection_counter += batch_size
+
+            if (total_samples > self.total_sequence_size):
+                break
+
+            self.ensemble.predict(batch)
+
+            self.results_manager.add_prediction_result(res_manager_seq_num, batch)
+
+            if (detection_counter > detection_batch_size):  # Run detection after a batch of samples has been added
+                detection_counter = 0
+                (is_drift_detected, diff, diff_sum) = self.detector.run_detection()
+                self.results_manager.add_detection_info(total_samples, diff, diff_sum, is_drift_detected)
+
+                if (is_drift_detected == True):
+                    latest_window = self.detector.get_latest_window()
+                    self.adaptor.adapt_ensemble(latest_window)
+
+            if (print_counter > print_interval):
+                print_counter = 0
+                self.results_manager.print_results()
+
+
+        self.results_manager.plot_results()
+
+
