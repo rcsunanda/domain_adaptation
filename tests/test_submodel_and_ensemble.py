@@ -61,17 +61,9 @@ def test_ann_submodel_training():
     process = prc.Process(num_dimensions=2, num_classes=2, class_distribution_parameters=gauss_params)
     print(process)
 
-    # Generate training data
-    data_points_label_0 = process.generate_data_points(label=0, count=500)
-    data_points_label_1 = process.generate_data_points(label=1, count=500)
-    training_data = data_points_label_0 + data_points_label_1
-
-    # Generate test data
-    test_data_count = 500
-    data_points_label_0 = process.generate_data_points(label=0, count=int(test_data_count/2))
-    data_points_label_1 = process.generate_data_points(label=1, count=int(test_data_count/2))
-    test_data = data_points_label_0 + data_points_label_1
-
+    # Generate training and test data
+    training_data = process.generate_data_points_from_all_labels(total_count=1000)
+    test_data = process.generate_data_points_from_all_labels(total_count=1000)
 
     # Train ANN_Submodel
     ann_submodel.train(training_data)
@@ -121,19 +113,11 @@ def test_ensemble_prediction():
     print(process_2)
 
     # Generate 2 training datasets from the 2 processes
-    data_points_label_0 = process_1.generate_data_points(label=0, count=500)
-    data_points_label_1 = process_1.generate_data_points(label=1, count=500)
-    training_data_1 = data_points_label_0 + data_points_label_1
-
-    data_points_label_0 = process_2.generate_data_points(label=0, count=500)
-    data_points_label_1 = process_2.generate_data_points(label=1, count=500)
-    training_data_2 = data_points_label_0 + data_points_label_1
+    training_data_1 = process_1.generate_data_points_from_all_labels(total_count=1000)
+    training_data_2 = process_2.generate_data_points_from_all_labels(total_count=1000)
 
     # Generate a test data from process_2
-    test_data_count = 500
-    data_points_label_0 = process_2.generate_data_points(label=0, count=int(test_data_count/2))
-    data_points_label_1 = process_2.generate_data_points(label=1, count=int(test_data_count/2))
-    test_data = data_points_label_0 + data_points_label_1
+    test_data = process_2.generate_data_points_from_all_labels(total_count=1000)
 
     # Train ANN_Submodels and add to ensemble
     ann_submodel_1.train(training_data_1)

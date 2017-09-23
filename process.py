@@ -6,6 +6,7 @@ import domain_adaptation.data_point as data_point
 
 import scipy.stats as st
 import numpy as np
+import math
 
 
 ###################################################################################################
@@ -39,6 +40,7 @@ class Process:
         return "Process(\n\tnum_dimensions={} \n\tnum_classes={} \n\tclass_distributions={} \n)".format(self.num_dimensions, self.num_classes, self.distributions)
 
 
+    # Generate given count of DataPoints from given label
     def generate_data_points(self, label, count):
         # Labels are 0-based
 
@@ -51,3 +53,23 @@ class Process:
         data_points = [data_point.DataPoint(X, label, -1) for X in samples]
 
         return data_points
+
+
+    # Generate given count of DataPoints from all labels (evenly distributed)
+    def generate_data_points_from_all_labels(self, total_count):
+        per_class_esample_count = math.floor(total_count / self.num_classes)
+
+        ret_data_points = []
+        for label in range(self.num_classes):
+            data_points = self.generate_data_points(label=label, count=per_class_esample_count)
+            ret_data_points.extend(data_points)
+
+        # If there some remaining count to complete total_count, generate some more samples from the last label
+        remaning = total_count - per_class_esample_count * self.num_classes
+        if (remaning > 0):
+            data_points = self.generate_data_points(label=self.num_classes-1, count=remaning)
+            ret_data_points.extend(data_points)
+
+        return ret_data_points
+
+

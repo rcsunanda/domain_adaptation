@@ -51,7 +51,41 @@ def test_generate_data_points():
 
 
 ###################################################################################################
+"""
+Test generation of data points from two classes of the Process
+"""
+
+def test_generate_data_points_from_all_labels():
+    gauss_params = []
+
+    # class 1 Gaussian distribution params
+    mean_1 = [0, 0]
+    cov_1 = [[1, 0], [0, 1]]
+
+    # class 2 Gaussian distribution params
+    mean_2 = [3, 3]
+    cov_2 = [[1, 0], [0, 1]]
+
+    gauss_params.append((mean_1, cov_1))
+    gauss_params.append((mean_2, cov_2))
+
+    process = prc.Process(num_dimensions=2, num_classes=2, class_distribution_parameters=gauss_params)
+    print(process)
+
+    # Generate data from all labels and plot
+    data_points_all_labels = process.generate_data_points_from_all_labels(total_count=1000)
+
+    x = [point.X[0] for point in data_points_all_labels]
+    y = [point.X[1] for point in data_points_all_labels]
+    plt.scatter(x, y)
+
+    plt.show()
+
+
+
+###################################################################################################
 
 # Call test functions
 
 test_generate_data_points()
+test_generate_data_points_from_all_labels()

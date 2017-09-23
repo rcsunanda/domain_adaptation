@@ -108,19 +108,11 @@ def test_adaptation():
 
 
     # Generate 2 training datasets from the 2 processes
-    data_points_label_0 = process_1.generate_data_points(label=0, count=500)
-    data_points_label_1 = process_1.generate_data_points(label=1, count=500)
-    training_data_1 = data_points_label_0 + data_points_label_1
-
-    data_points_label_0 = process_2.generate_data_points(label=0, count=500)
-    data_points_label_1 = process_2.generate_data_points(label=1, count=500)
-    training_data_2 = data_points_label_0 + data_points_label_1
+    training_data_1 = process_1.generate_data_points_from_all_labels(total_count=1000)
+    training_data_2 = process_2.generate_data_points_from_all_labels(total_count=1000)
 
     # Generate a test data from process_2
-    test_data_count = 500
-    data_points_label_0 = process_2.generate_data_points(label=0, count=int(test_data_count/2))
-    data_points_label_1 = process_2.generate_data_points(label=1, count=int(test_data_count/2))
-    test_data = data_points_label_0 + data_points_label_1
+    test_data = process_2.generate_data_points_from_all_labels(total_count=500)
 
 
     # Call adapt_ensemble() on first dataset

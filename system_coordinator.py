@@ -30,6 +30,7 @@ class SystemParameters:
         self.results_manager_avg_error_window_size = None
 
         self.system_coordinator_initial_dataset_size = None
+        self.system_coordinator_total_sequence_size = None
 
 
     def __repr__(self):
@@ -85,7 +86,9 @@ class SystemCoordinator:
         self.results_manager = rman.ResultsManager(sys_params.results_manager_avg_error_window_size)
 
         self.initial_dataset_size = sys_params.system_coordinator_initial_dataset_size
+        self.total_sequence_size = sys_params.system_coordinator_total_sequence_size
         self.submodel_type = sys_params.adaptor_submodel_type
+
 
     def __repr__(self):
         return "SystemCoordinator(\n\tprocess={} \n\tensemble={} \n\tdetector={} \n\tadaptor={} \n\tresults_manager={} \n)"\
@@ -95,12 +98,7 @@ class SystemCoordinator:
     # Generate an initial training dataset, train a submodel, and add it to the ensemble
     def train_initial_model(self):
 
-        per_class_esample_count =  int(self.initial_dataset_size/ self.process.num_classes)
-
-        initial_training_dataset = []
-        for label in range(self.process.num_classes):
-            data_points = self.process.generate_data_points(label=label, count=per_class_esample_count)
-            initial_training_dataset.extend(data_points)
+        initial_training_dataset = self.process.generate_data_points_from_all_labels(self.initial_dataset_size)
 
         initial_submodel = da.create_submodel(self.submodel_type)
         initial_submodel.train(initial_training_dataset)
@@ -110,10 +108,7 @@ class SystemCoordinator:
 
         # Generate some test data and check initial_model results
 
-        test_data = []
-        for label in range(self.process.num_classes):
-            data_points = self.process.generate_data_points(label=label, count=per_class_esample_count)
-            test_data.extend(data_points)
+        test_data = self.process.generate_data_points_from_all_labels(self.initial_dataset_size)
 
         self.ensemble.predict(test_data)
 
@@ -130,3 +125,6 @@ class SystemCoordinator:
 
     def run(self):
         self.train_initial_model()
+
+        # for index in range(self.total_sequence_size):
+        #     batch = self.process.generate_data_points()

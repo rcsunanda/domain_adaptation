@@ -61,10 +61,9 @@ def test_abrupt_drift_detection():
     print(process)
 
     # Generate data
-    count=2000  # How many samples from one label
-    data_points_label_0 = process.generate_data_points(label=0, count=count)
-    data_points_label_1 = process.generate_data_points(label=1, count=count)
-    data_points = data_points_label_0 + data_points_label_1
+    count=4000
+    midpoint=int(count/2)
+    data_points = process.generate_data_points_from_all_labels(total_count=count)
 
     # Emulate a data point sequence
     seq_no = []
@@ -78,8 +77,8 @@ def test_abrupt_drift_detection():
             seq_no.append(index)
 
             # Expected drift
-            if (index > count and index < count + 2*window_size):   # Part of the two windows fall on either side of 'count'
-                to_right = index - count
+            if (index > midpoint and index < midpoint + 2*window_size):   # Part of the two windows fall on either side of 'count'
+                to_right = index - midpoint
                 to_left = 2*window_size - to_right
                 expected_drift = min(to_left, to_right) / window_size
             else:

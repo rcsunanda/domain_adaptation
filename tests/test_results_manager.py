@@ -19,9 +19,7 @@ def test_results_manager():
     cov_1 = [[1, 0], [0, 1]]
     process = prc.Process(num_dimensions=2, num_classes=1, class_distribution_parameters=[(mean_1, cov_1)])
 
-    # Generate some data and set their
     data_points = process.generate_data_points(label=0, count=100)
-
 
     results_manager = rman.ResultsManager(avg_error_window_size=10)
 
@@ -35,6 +33,7 @@ def test_results_manager():
         diff_sum += diff
         is_drift_detected = False
 
+        # Set predicted y values
         data_point.predicted_y = data_point.true_y
         if (index % 3 == 0):
             data_point.predicted_y = -100
