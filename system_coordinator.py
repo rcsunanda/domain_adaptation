@@ -38,12 +38,12 @@ class SystemParameters:
     def __repr__(self):
         return "SystemParameters(\n\tprocess_num_dimensions={} \n\tprocess_num_classes={} \n\t" \
                "process_class_distribution_parameters={} \n\t process_class_distribution_parameters_2={} \n\t detector_window_size={} \n\t" \
-               "results_manager_avg_error_window_size={} \n\tsystem_coordinator_initial_dataset_size={} \n\t" \
+               "results_manager_avg_error_window_size={} \n\tsystem_coordinator_initial_dataset_size={} \n\ttotal_sequence_size={} \n\t" \
                "system_coordinator_drift_scenario={} \n)"\
             .format(self.process_num_dimensions, self.process_num_classes,
                     self.process_class_distribution_parameters, self.process_class_distribution_parameters_2, self.detector_window_size,
                     self.results_manager_avg_error_window_size, self.system_coordinator_initial_dataset_size,
-                    self.system_coordinator_drift_scenario)
+                    self.system_coordinator_initial_dataset_size, self.system_coordinator_drift_scenario)
 
 
 
@@ -99,6 +99,10 @@ class SystemCoordinator:
         self.process_class_distribution_parameters_2 = sys_params.process_class_distribution_parameters_2
         self.was_drift_occured = False  # To ensure we set the second set of process parameters only once
 
+        # For "Gradual_Drift" drift scenario
+        self.is_left_printed = False  # To print drift start and end only once
+        self.is_right_printed = False
+
 
     def __repr__(self):
         return "SystemCoordinator(\n\tprocess={} \n\tensemble={} \n\tdetector={} \n\tadaptor={} \n\tresults_manager={} \n)"\
@@ -108,14 +112,39 @@ class SystemCoordinator:
     # Given the current seq no, set time varying process parameters
     def set_process_parameters(self, seq):
         if (self.drift_scenario == "Abrupt_Drift"):
-            if (self.was_drift_occured == False and seq >= self.total_sequence_size/2):
+            midpoint = (self.total_sequence_size + self.initial_dataset_size)/2
+            if (self.was_drift_occured == False and seq >= midpoint):
                 print("Abrupt_Drift scenario: changing process parameters to second set")
                 self.process.set_class_distribution_params(self.process_class_distribution_parameters_2)
                 print(self.process)
                 self.was_drift_occured = True
 
         elif (self.drift_scenario == "Gradual_Drift"):
-            assert False
+            midpoint = (self.total_sequence_size + self.initial_dataset_size)/2
+
+            drift_period_size = 2000
+            left = midpoint - drift_period_size/2
+            right = midpoint + drift_period_size/2
+
+            batch_size = 10 # MUST BE PARAMETERIZED (same as used in run())
+            increment = 3*batch_size/drift_period_size
+            if (seq >= left and seq <= right):
+                mean_1 = self.process.class_distribution_params[0][0]
+                mean_2 = self.process.class_distribution_params[1][0]
+                mean_1[0] += increment
+                mean_2[0] += increment
+                self.process.set_class_distribution_params(self.process.class_distribution_params)
+
+            if (seq >= left and self.is_left_printed == False):
+                self.results_manager.add_special_marker(seq, "drift_start")
+                self.is_left_printed = True
+                print("Gradual drift started: seq={}, process={}".format(seq, self.process))
+
+            if (seq >= right and self.is_right_printed == False):
+                self.results_manager.add_special_marker(seq, "drift_end")
+                self.is_right_printed = True
+                print("Gradual drift finished: seq={}, process={}".format(seq, self.process))
+
         elif (self.drift_scenario == "Recurring_Context"):
             assert False
         else:
@@ -187,15 +216,15 @@ class SystemCoordinator:
                 detection_counter = 0
                 self.detector.add_data_points(batch)
                 (is_drift_detected, diff, diff_sum) = self.detector.run_detection()
-                self.results_manager.add_detection_info(total_samples, diff, diff_sum, is_drift_detected)
+                self.results_manager.add_detection_info(res_manager_seq_num, diff, diff_sum, is_drift_detected)
 
                 if (is_drift_detected == True):
                     latest_window = self.detector.get_latest_window()
                     self.adaptor.adapt_ensemble(latest_window)
-                    print("Drift detected: adapted ensemble: submodel_count={} \nensemble={}"
-                          .format(len(self.ensemble.submodels), self.ensemble))
+                    # print("Drift detected: adapted ensemble: submodel_count={} \nensemble={}"
+                    #       .format(len(self.ensemble.submodels), self.ensemble))
 
-            self.set_process_parameters(total_samples)
+            self.set_process_parameters(res_manager_seq_num)
 
             if (info_print_counter > info_print_interval):
                 info_print_counter = 0
@@ -203,7 +232,7 @@ class SystemCoordinator:
 
             if (progress_print_counter > progress_print_interval):
                 progress_print_counter = 0
-                print("total_samples={}".format(total_samples))
+                print("res_manager_seq_num={}".format(res_manager_seq_num))
 
         print(self.detector)
         self.results_manager.plot_results()

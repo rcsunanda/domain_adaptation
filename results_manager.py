@@ -19,6 +19,7 @@ class ResultsManager:
         self.detection_points_seq = []  # Sequence numbers when a drift was detected (is a 1/0 seq more suitable for this)
         self.diff_seq = []
         self.diff_sum_seq = []
+        self.special_marker_seq = []    # List of (seq, "marker-name") pairs
 
         self.current_seq = -1
         self.total_sample_count = 0
@@ -76,6 +77,9 @@ class ResultsManager:
             self.error_count_since_last_detection = 0
 
 
+    def add_special_marker(self, seq_num, marker_name):
+        self.special_marker_seq.append((seq_num, marker_name))
+
     def add_adaptation_info(self, seq_num):
         assert False
 
@@ -124,6 +128,9 @@ class ResultsManager:
         for x in self.detection_points_seq:
             plt.axvline(x, color='c', linestyle='--', linewidth=0.5)
 
+        for pair in self.special_marker_seq:
+            plt.axvline(pair[0], color='r', linewidth=2, label=pair[1])
+
         plt.legend(loc='upper right')
 
         plt.figure(2)
@@ -140,6 +147,9 @@ class ResultsManager:
 
         for x in self.detection_points_seq:
             plt.axvline(x, color='c', linestyle='--', linewidth=0.5)
+
+        for pair in self.special_marker_seq:
+            plt.axvline(pair[0], color='r', linewidth=2, label=pair[1])
 
         plt.legend(loc='upper right')
         plt.show()

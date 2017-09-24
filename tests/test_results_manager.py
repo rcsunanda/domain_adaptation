@@ -49,6 +49,8 @@ def test_results_manager():
         if (index % 20 == 0):
             results_manager.print_results()
 
+    results_manager.add_special_marker(73, "marker_1")
+    results_manager.add_special_marker(83, "marker_2")
     results_manager.plot_results()
 
 

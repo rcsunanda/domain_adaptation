@@ -21,14 +21,17 @@ class Process:
         self.num_dimensions = num_dimensions
         self.num_classes = num_classes
         self.distributions = [] # Class conditional data distributions P(X|y)
+        self.class_distribution_params = class_distribution_parameters  # Store for later retrieving
 
         assert (len(class_distribution_parameters) == num_classes)
 
         self.set_class_distribution_params(class_distribution_parameters)
 
 
+
     def __repr__(self):
-        return "Process(\n\tnum_dimensions={} \n\tnum_classes={} \n\tclass_distributions={} \n)".format(self.num_dimensions, self.num_classes, self.distributions)
+        return "Process(\n\tnum_dimensions={} \n\tnum_classes={} \n\t class_distribution_params={} \n\tclass_distributions={} \n)"\
+            .format(self.num_dimensions, self.num_classes, self.class_distribution_params, self.distributions)
 
 
     def set_class_distribution_params(self, class_distribution_parameters):
