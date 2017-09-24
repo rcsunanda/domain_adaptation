@@ -79,7 +79,7 @@ class DriftDetector:
 
 
     # Return tuple (is_drift_detected, current_diff, diff_sum)
-    def run_detection(self):
+    def run_detection(self, seq):
         sequence_size = len(self.data_point_sequence)
 
         # Not enough data points for two windows

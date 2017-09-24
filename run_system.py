@@ -61,7 +61,7 @@ def run_abrupt_drift():
     sys_parameters.results_manager_avg_error_window_size = 50
 
     sys_parameters.system_coordinator_initial_dataset_size = 1000
-    sys_parameters.system_coordinator_total_sequence_size = 6000
+    sys_parameters.system_coordinator_total_sequence_size = 4000
     sys_parameters.system_coordinator_batch_size = 10
 
     sys_parameters.system_coordinator_drift_scenario = "Abrupt_Drift"
@@ -121,7 +121,7 @@ def run_gradual_drift():
     sys_parameters.results_manager_avg_error_window_size = 50
 
     sys_parameters.system_coordinator_initial_dataset_size = 1000
-    sys_parameters.system_coordinator_total_sequence_size = 7000
+    sys_parameters.system_coordinator_total_sequence_size = 5000
     sys_parameters.system_coordinator_batch_size = 10
 
     sys_parameters.system_coordinator_drift_scenario = "Gradual_Drift"
@@ -200,11 +200,11 @@ def run_recurring_context():
     sys_parameters.results_manager_avg_error_window_size = 50
 
     sys_parameters.system_coordinator_initial_dataset_size = 1000
-    sys_parameters.system_coordinator_total_sequence_size = 6000
+    sys_parameters.system_coordinator_total_sequence_size = 7000
     sys_parameters.system_coordinator_batch_size = 10
 
     sys_parameters.system_coordinator_drift_scenario = "Recurring_Context"
-    sys_parameters.system_coordinator_recurrence_count = 4
+    sys_parameters.system_coordinator_recurrence_count = 3
 
     print("System parameters are set: \n{}".format(sys_parameters))
 
@@ -223,8 +223,8 @@ def run_recurring_context():
 
 ###################################################################################################
 
-# Call main function
+# Call main functions
 
 # run_abrupt_drift()
-run_gradual_drift()
-# run_recurring_context()
+# run_gradual_drift()
+run_recurring_context()

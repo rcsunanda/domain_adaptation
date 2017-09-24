@@ -106,7 +106,7 @@ class SystemCoordinator:
         # Parameters specific to scenarios
 
         if (self.drift_scenario == "Abrupt_Drift"):
-            self.process_class_distribution_parameters_2 = sys_params.process_class_distribution_parameters_2  # Also for Recurring_Context
+            self.process_class_distribution_parameters_2 = sys_params.process_class_distribution_parameters_2
             self.was_drift_occured = False  # To ensure we set the second set of process parameters only once
             self.midpoint = (self.total_sequence_size + self.initial_dataset_size) / 2
 
@@ -123,10 +123,13 @@ class SystemCoordinator:
             self.is_right_printed = False
 
         elif (self.drift_scenario == "Recurring_Context"):
+            self.process_class_distribution_parameters = sys_params.process_class_distribution_parameters
+            self.process_class_distribution_parameters_2 = sys_params.process_class_distribution_parameters_2
+
             self.recurrence_count = sys_params.system_coordinator_recurrence_count
 
-            self.between_switch_size = (self.total_sequence_size + self.initial_dataset_size) / self.recurrence_count
-            assert self.between_switch_size >= 3 * self.detector.window_size  # To have enough diff-stable periods between switches
+            self.between_switch_size = (self.total_sequence_size + self.initial_dataset_size) / (self.recurrence_count + 1)
+            assert self.between_switch_size >= 4 * self.detector.window_size  # To have enough diff-stable periods between switches
             self.next_switch_point = self.between_switch_size
 
         else:
@@ -143,9 +146,10 @@ class SystemCoordinator:
         if (self.drift_scenario == "Abrupt_Drift"):
 
             if (self.was_drift_occured == False and seq >= self.midpoint):
-                print("Abrupt_Drift scenario: changing process parameters to second set")
+                print("Abrupt_Drift scenario: changing process parameters to second set: seq={}".format(seq))
                 self.process.set_class_distribution_params(self.process_class_distribution_parameters_2)
                 print(self.process)
+                self.results_manager.add_special_marker(seq, "drift")
                 self.was_drift_occured = True
 
         elif (self.drift_scenario == "Gradual_Drift"):
@@ -169,9 +173,19 @@ class SystemCoordinator:
 
         elif (self.drift_scenario == "Recurring_Context"):
 
-            # if (seq >= self.next_switch_point):
-            #
-            #     self.next_switch_point += self.between_switch_size
+            if (seq >= self.next_switch_point):
+                print("Recurring_Context scenario: switching context: seq={}".format(seq))
+                self.results_manager.add_special_marker(seq, "recurrent_drift")
+
+                if (self.process.class_distribution_params == self.process_class_distribution_parameters):
+                    self.process.set_class_distribution_params(self.process_class_distribution_parameters_2)
+                elif (self.process.class_distribution_params == self.process_class_distribution_parameters_2):
+                    self.process.set_class_distribution_params(self.process_class_distribution_parameters)
+                else:
+                    assert False
+
+                print(self.process)
+                self.next_switch_point += self.between_switch_size
 
         else:
             assert False
@@ -192,9 +206,14 @@ class SystemCoordinator:
 
         # Generate some test data and check initial_model results
 
-        test_data = self.process.generate_data_points_from_all_labels(self.initial_dataset_size)
+        test_data = []
+        num_batches = int(self.initial_dataset_size / self.batch_size)
+        for i in range(num_batches):
+            batch = self.process.generate_data_points_from_all_labels(self.batch_size)
+            test_data.extend(batch)
 
         self.ensemble.predict(test_data)
+        self.detector.add_data_points(test_data)    # So the detector can use this data for diff calculation
 
         # predict_and_print_results(self.ensemble, test_data, "initial model")
 
@@ -213,8 +232,7 @@ class SystemCoordinator:
         progress_print_interval = 100
         detection_batch_size = 10
 
-        total_samples = 0
-        res_manager_seq_num = self.initial_dataset_size - 1 # Because a result set was added in train_initial_model
+        seq_num = self.initial_dataset_size - 1 # Because a result set was added in train_initial_model
 
         info_print_counter = 0
         progress_print_counter = 0
@@ -222,25 +240,24 @@ class SystemCoordinator:
 
         while(True):
             batch = self.process.generate_data_points_from_all_labels(total_count=self.batch_size)
-            total_samples += self.batch_size
-            res_manager_seq_num += self.batch_size
+            seq_num += self.batch_size
 
             info_print_counter += self.batch_size
             progress_print_counter += self.batch_size
             detection_counter += self.batch_size
 
-            if (total_samples > self.total_sequence_size):
+            if (seq_num > (self.total_sequence_size + self.initial_dataset_size)):
                 break
 
             self.ensemble.predict(batch)
 
-            self.results_manager.add_prediction_result(res_manager_seq_num, batch)
+            self.results_manager.add_prediction_result(seq_num, batch)
 
             if (detection_counter > detection_batch_size):  # Run detection after a batch of samples has been added
                 detection_counter = 0
                 self.detector.add_data_points(batch)
-                (is_drift_detected, diff, diff_sum) = self.detector.run_detection()
-                self.results_manager.add_detection_info(res_manager_seq_num, diff, diff_sum, is_drift_detected)
+                (is_drift_detected, diff, diff_sum) = self.detector.run_detection(seq_num)
+                self.results_manager.add_detection_info(seq_num, diff, diff_sum, is_drift_detected)
 
                 if (is_drift_detected == True):
                     latest_window = self.detector.get_latest_window()
@@ -248,7 +265,7 @@ class SystemCoordinator:
                     # print("Drift detected: adapted ensemble: submodel_count={} \nensemble={}"
                     #       .format(len(self.ensemble.submodels), self.ensemble))
 
-            self.set_process_parameters(res_manager_seq_num)
+            self.set_process_parameters(seq_num)
 
             if (info_print_counter > info_print_interval):
                 info_print_counter = 0
@@ -256,7 +273,7 @@ class SystemCoordinator:
 
             if (progress_print_counter > progress_print_interval):
                 progress_print_counter = 0
-                print("res_manager_seq_num={}".format(res_manager_seq_num))
+                print("seq_num={}".format(seq_num))
 
         print(self.detector)
         self.results_manager.plot_results()
