@@ -224,7 +224,7 @@ class SystemCoordinator:
         # parameterize
         info_print_interval = 2000
         progress_print_interval = 100
-        detection_batch_size = 10
+        detection_batch_size = 20
 
         seq_num = len(self.detector.data_point_sequence)    # Because a result set was added in train_initial_model
 
@@ -248,7 +248,7 @@ class SystemCoordinator:
             self.results_manager.add_prediction_result(seq_num, batch)
             self.detector.add_data_points(batch)
 
-            if (detection_counter > detection_batch_size):  # Run detection after a certain no. of samples has been added
+            if (detection_counter >= detection_batch_size):  # Run detection after a certain no. of samples has been added
                 detection_counter = 0
                 (is_drift_detected, diff, diff_sum) = self.detector.run_detection(seq_num)
                 self.results_manager.add_detection_info(seq_num, diff, diff_sum, is_drift_detected)
@@ -261,11 +261,11 @@ class SystemCoordinator:
 
             self.set_process_parameters(seq_num)
 
-            if (info_print_counter > info_print_interval):
+            if (info_print_counter >= info_print_interval):
                 info_print_counter = 0
                 self.results_manager.print_results()
 
-            if (progress_print_counter > progress_print_interval):
+            if (progress_print_counter >= progress_print_interval):
                 progress_print_counter = 0
                 print("seq_num={}".format(seq_num))
 

@@ -73,7 +73,7 @@ def test_abrupt_drift_detection():
         drift_detector.add_data_points([point])
 
         if (index % detection_batch_size == 0):   # Run detection after a batch of samples has been added
-            drift_detector.run_detection()
+            drift_detector.run_detection(index)
             seq_no.append(index)
 
             # Expected drift

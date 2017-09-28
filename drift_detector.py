@@ -7,6 +7,11 @@ import domain_adaptation.distribution_difference as ddif
 import numpy as np
 
 
+def running_mean(x, N):
+    cumsum = np.cumsum(np.insert(x, 0, 0))
+    return (cumsum[N:] - cumsum[:-N]) / N
+
+
 ###################################################################################################
 """
 Given two windows of DataPoints, convert them to windows of samples (vectors)
@@ -66,6 +71,10 @@ class DriftDetector:
         self.window_size = window_size
         self.diff_threshold_to_sum = 0.005  # Parameterize
         self.diff_sum_threshold_to_detect = 0.05
+
+        # self.diff_threshold_to_sum = 0.0035  # For gradual drift
+        # self.diff_sum_threshold_to_detect = 0.04    # For gradual drift
+
         #self.current_diff = 0   # may not need to be a memeber
         self.diff_sum = 0
 
@@ -112,9 +121,27 @@ class DriftDetector:
 
         is_drift_detected = False
         if (self.diff_sum >= self.diff_sum_threshold_to_detect):
-            self.drift_detected_seq_nums.append(sequence_size-1)
-            self.diff_sum = 0
-            is_drift_detected = True
+            # Check whether this happened when diff was rising (rather than falling)
+
+            N = 7   # Moving average filter size
+            smoothed_diff_seq = running_mean(self.diff_sequence, N)
+
+            diff_check_window_size = 10
+            diff_check_window = smoothed_diff_seq[-diff_check_window_size:]
+
+            rising_count = 0
+            for i in range (1, diff_check_window_size):
+                if diff_check_window[i] >= diff_check_window[i-1]:  # Diff value is rising
+                    rising_count += 1
+
+            if (rising_count > diff_check_window_size/2):   # Diff values were rising at least half the time during the check window
+                self.drift_detected_seq_nums.append(sequence_size - 1)
+                self.diff_sum = 0
+                is_drift_detected = True
+
+            # self.drift_detected_seq_nums.append(sequence_size - 1)
+            # self.diff_sum = 0
+            # is_drift_detected = True
 
         return (is_drift_detected, diff, self.diff_sum)
 

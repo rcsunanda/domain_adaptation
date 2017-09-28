@@ -3,7 +3,12 @@ ResultsManager class
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
 
+
+def running_mean(x, N):
+    cumsum = np.cumsum(np.insert(x, 0, 0))
+    return (cumsum[N:] - cumsum[:-N]) / N
 
 
 ###################################################################################################
@@ -120,6 +125,14 @@ class ResultsManager:
         x = [pair[0] for pair in self.diff_seq]
         y = [pair[1] for pair in self.diff_seq]
         plt.plot(x, y, label='diff_seq')
+
+        # Smoothed diff seq
+        N = 7
+        x = [pair[0] for pair in self.diff_seq]
+        x = x[N-1:]
+        y = [pair[1] for pair in self.diff_seq]
+        y = running_mean(y, N)
+        plt.plot(x, y, label='smoothed_diff_seq')
 
         x = [pair[0] for pair in self.diff_sum_seq]
         y = [pair[1] for pair in self.diff_sum_seq]
