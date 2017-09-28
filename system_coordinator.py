@@ -110,6 +110,8 @@ class SystemCoordinator:
             self.was_drift_occured = False  # To ensure we set the second set of process parameters only once
             self.midpoint = (self.total_sequence_size + self.initial_dataset_size) / 2
 
+            self.set_process_parameters = self.set_abrupt_drift_process_params
+
         elif (self.drift_scenario == "Gradual_Drift"):
             self.midpoint = (self.total_sequence_size + self.initial_dataset_size) / 2
 
@@ -122,6 +124,9 @@ class SystemCoordinator:
             self.is_left_printed = False  # To print drift start and end only once
             self.is_right_printed = False
 
+            self.set_process_parameters = self.set_gradual_drift_process_params
+
+
         elif (self.drift_scenario == "Recurring_Context"):
             self.process_class_distribution_parameters = sys_params.process_class_distribution_parameters
             self.process_class_distribution_parameters_2 = sys_params.process_class_distribution_parameters_2
@@ -132,6 +137,8 @@ class SystemCoordinator:
             assert self.between_switch_size >= 4 * self.detector.window_size  # To have enough diff-stable periods between switches
             self.next_switch_point = self.between_switch_size
 
+            self.set_process_parameters = self.set_recurring_context_process_params
+
         else:
             assert False
 
@@ -141,54 +148,50 @@ class SystemCoordinator:
             .format(self.process, self.ensemble, self.detector, self.adaptor, self.results_manager)
 
 
-    # Given the current seq no, set time varying process parameters
-    def set_process_parameters(self, seq):
-        if (self.drift_scenario == "Abrupt_Drift"):
+    # Following 3 functions set time varying process parameters given the current seq no
 
-            if (self.was_drift_occured == False and seq >= self.midpoint):
-                print("Abrupt_Drift scenario: changing process parameters to second set: seq={}".format(seq))
+    def set_abrupt_drift_process_params(self, seq):
+        if (self.was_drift_occured == False and seq >= self.midpoint):
+            print("Abrupt_Drift scenario: changing process parameters to second set: seq={}".format(seq))
+            self.process.set_class_distribution_params(self.process_class_distribution_parameters_2)
+            print(self.process)
+            self.results_manager.add_special_marker(seq, "drift")
+            self.was_drift_occured = True
+
+
+    def set_gradual_drift_process_params(self, seq):
+        if (seq >= self.drift_start_seq and seq <= self.drift_end_seq):
+            for class_distribution_params in self.process.class_distribution_params:
+                mean = class_distribution_params[0]
+                mean[0] += self.increment  # Increment mean along dimension 1
+
+            self.process.set_class_distribution_params(self.process.class_distribution_params)
+
+        if (seq >= self.drift_start_seq and self.is_left_printed == False):
+            self.results_manager.add_special_marker(seq, "drift_start")
+            self.is_left_printed = True
+            print("Gradual drift started: seq={}, process={}".format(seq, self.process))
+
+        if (seq >= self.drift_end_seq and self.is_right_printed == False):
+            self.results_manager.add_special_marker(seq, "drift_end")
+            self.is_right_printed = True
+            print("Gradual drift finished: seq={}, process={}".format(seq, self.process))
+
+
+    def set_recurring_context_process_params(self, seq):
+        if (seq >= self.next_switch_point):
+            print("Recurring_Context scenario: switching context: seq={}".format(seq))
+            self.results_manager.add_special_marker(seq, "recurrent_drift")
+
+            if (self.process.class_distribution_params == self.process_class_distribution_parameters):
                 self.process.set_class_distribution_params(self.process_class_distribution_parameters_2)
-                print(self.process)
-                self.results_manager.add_special_marker(seq, "drift")
-                self.was_drift_occured = True
+            elif (self.process.class_distribution_params == self.process_class_distribution_parameters_2):
+                self.process.set_class_distribution_params(self.process_class_distribution_parameters)
+            else:
+                assert False
 
-        elif (self.drift_scenario == "Gradual_Drift"):
-
-            if (seq >= self.drift_start_seq and seq <= self.drift_end_seq):
-                for class_distribution_params in self.process.class_distribution_params:
-                    mean = class_distribution_params[0]
-                    mean[0] += self.increment   # Increment mean along dimension 1
-
-                self.process.set_class_distribution_params(self.process.class_distribution_params)
-
-            if (seq >= self.drift_start_seq and self.is_left_printed == False):
-                self.results_manager.add_special_marker(seq, "drift_start")
-                self.is_left_printed = True
-                print("Gradual drift started: seq={}, process={}".format(seq, self.process))
-
-            if (seq >= self.drift_end_seq and self.is_right_printed == False):
-                self.results_manager.add_special_marker(seq, "drift_end")
-                self.is_right_printed = True
-                print("Gradual drift finished: seq={}, process={}".format(seq, self.process))
-
-        elif (self.drift_scenario == "Recurring_Context"):
-
-            if (seq >= self.next_switch_point):
-                print("Recurring_Context scenario: switching context: seq={}".format(seq))
-                self.results_manager.add_special_marker(seq, "recurrent_drift")
-
-                if (self.process.class_distribution_params == self.process_class_distribution_parameters):
-                    self.process.set_class_distribution_params(self.process_class_distribution_parameters_2)
-                elif (self.process.class_distribution_params == self.process_class_distribution_parameters_2):
-                    self.process.set_class_distribution_params(self.process_class_distribution_parameters)
-                else:
-                    assert False
-
-                print(self.process)
-                self.next_switch_point += self.between_switch_size
-
-        else:
-            assert False
+            print(self.process)
+            self.next_switch_point += self.between_switch_size
 
 
     # Generate an initial training dataset, train a submodel, and add it to the ensemble
@@ -198,13 +201,7 @@ class SystemCoordinator:
 
         self.adaptor.adapt_ensemble(initial_training_dataset)
 
-        # initial_submodel = da.create_submodel(self.submodel_type)
-        # initial_submodel.train(initial_training_dataset)
-        #
-        # self.ensemble.add_submodel(initial_submodel)
-
-
-        # Generate some test data and check initial_model results
+        # Generate some test data and check initial_model results (generate in small batches, otherwise results in class imbalance)
 
         test_data = []
         num_batches = int(self.initial_dataset_size / self.batch_size)
@@ -217,11 +214,8 @@ class SystemCoordinator:
 
         # predict_and_print_results(self.ensemble, test_data, "initial model")
 
-        # Add to results manager
-
         self.results_manager.add_prediction_result(len(test_data), test_data)   # First set of results added to results manager
         self.results_manager.print_results()
-        # self.results_manager.plot_results()
 
 
     def run(self):
@@ -232,7 +226,7 @@ class SystemCoordinator:
         progress_print_interval = 100
         detection_batch_size = 10
 
-        seq_num = self.initial_dataset_size - 1 # Because a result set was added in train_initial_model
+        seq_num = len(self.detector.data_point_sequence)    # Because a result set was added in train_initial_model
 
         info_print_counter = 0
         progress_print_counter = 0
@@ -252,10 +246,10 @@ class SystemCoordinator:
             self.ensemble.predict(batch)
 
             self.results_manager.add_prediction_result(seq_num, batch)
+            self.detector.add_data_points(batch)
 
-            if (detection_counter > detection_batch_size):  # Run detection after a batch of samples has been added
+            if (detection_counter > detection_batch_size):  # Run detection after a certain no. of samples has been added
                 detection_counter = 0
-                self.detector.add_data_points(batch)
                 (is_drift_detected, diff, diff_sum) = self.detector.run_detection(seq_num)
                 self.results_manager.add_detection_info(seq_num, diff, diff_sum, is_drift_detected)
 

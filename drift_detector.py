@@ -82,6 +82,8 @@ class DriftDetector:
     def run_detection(self, seq):
         sequence_size = len(self.data_point_sequence)
 
+        # print("seq={}, sequence_size={}".format(seq, sequence_size))
+
         # Not enough data points for two windows
         if (sequence_size < 2 * self.window_size):
             diff = 0

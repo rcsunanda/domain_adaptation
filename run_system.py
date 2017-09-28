@@ -225,6 +225,6 @@ def run_recurring_context():
 
 # Call main functions
 
-# run_abrupt_drift()
+run_abrupt_drift()
 # run_gradual_drift()
-run_recurring_context()
+# run_recurring_context()
