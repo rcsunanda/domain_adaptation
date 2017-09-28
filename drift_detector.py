@@ -61,7 +61,7 @@ This difference is summed, and when it increases above a threshold, it is consid
 """
 
 class DriftDetector:
-    def __init__(self, window_size):
+    def __init__(self, window_size, diff_threshold_to_sum, diff_sum_threshold_to_detect):
         self.data_point_sequence = []
 
         self.diff_sequence = []  # Temporary; for debugging
@@ -69,8 +69,11 @@ class DriftDetector:
         self.drift_detected_seq_nums = []  # Temporary; for debugging
 
         self.window_size = window_size
-        self.diff_threshold_to_sum = 0.005  # Parameterize
-        self.diff_sum_threshold_to_detect = 0.05
+        self.diff_threshold_to_sum = diff_threshold_to_sum
+        self.diff_sum_threshold_to_detect = diff_sum_threshold_to_detect
+
+        # self.diff_threshold_to_sum = 0.005  # Parameterize
+        # self.diff_sum_threshold_to_detect = 0.05
 
         # self.diff_threshold_to_sum = 0.0035  # For gradual drift
         # self.diff_sum_threshold_to_detect = 0.04    # For gradual drift

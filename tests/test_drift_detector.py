@@ -39,7 +39,7 @@ Compare actual drift with expected drift
 def test_abrupt_drift_detection():
 
     window_size=500
-    drift_detector = dd.DriftDetector(window_size)
+    drift_detector = dd.DriftDetector(window_size=window_size, diff_threshold_to_sum=0.005, diff_sum_threshold_to_detect=0.05)
     print(drift_detector)
 
     # Generate some data from a 2 class stochastic process

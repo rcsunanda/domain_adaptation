@@ -57,6 +57,8 @@ def run_abrupt_drift():
     sys_parameters.adaptor_submodel_type = "ANN_Submodel"
 
     sys_parameters.detector_window_size = 500
+    sys_parameters.detector_diff_threshold_to_sum = 0.005
+    sys_parameters.detector_diff_sum_threshold_to_detect = 0.05
 
     sys_parameters.results_manager_avg_error_window_size = 50
 
@@ -117,6 +119,8 @@ def run_gradual_drift():
     sys_parameters.adaptor_submodel_type = "ANN_Submodel"
 
     sys_parameters.detector_window_size = 500
+    sys_parameters.detector_diff_threshold_to_sum = 0.0035
+    sys_parameters.detector_diff_sum_threshold_to_detect = 0.04
 
     sys_parameters.results_manager_avg_error_window_size = 50
 
@@ -196,6 +200,8 @@ def run_recurring_context():
     sys_parameters.adaptor_submodel_type = "ANN_Submodel"
 
     sys_parameters.detector_window_size = 500
+    sys_parameters.detector_diff_threshold_to_sum = 0.005
+    sys_parameters.detector_diff_sum_threshold_to_detect = 0.05
 
     sys_parameters.results_manager_avg_error_window_size = 50
 

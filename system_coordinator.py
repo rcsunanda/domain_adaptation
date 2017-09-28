@@ -25,6 +25,8 @@ class SystemParameters:
         self.process_class_distribution_parameters_2 = None # For Abrupt_Drift and Recurring_Context drift scenarios
 
         self.detector_window_size = None
+        self.detector_diff_threshold_to_sum = None
+        self.detector_diff_sum_threshold_to_detect = None
 
         self.adaptor_submodel_type = None
 
@@ -44,11 +46,13 @@ class SystemParameters:
 
     def __repr__(self):
         return "SystemParameters(\n\tprocess_num_dimensions={} \n\tprocess_num_classes={} \n\t" \
-               "process_class_distribution_parameters={} \n\t process_class_distribution_parameters_2={} \n\t detector_window_size={} \n\t" \
+               "process_class_distribution_parameters={} \n\tprocess_class_distribution_parameters_2={} \n\tdetector_window_size={} \n\t" \
+               "detector_diff_threshold_to_sum={} \n\tdetector_diff_sum_threshold_to_detect={}"\
                "results_manager_avg_error_window_size={} \n\tsystem_coordinator_initial_dataset_size={} \n\ttotal_sequence_size={} \n\t" \
                "system_coordinator_drift_scenario={} \n)"\
             .format(self.process_num_dimensions, self.process_num_classes,
                     self.process_class_distribution_parameters, self.process_class_distribution_parameters_2, self.detector_window_size,
+                    self.detector_diff_threshold_to_sum, self.detector_diff_sum_threshold_to_detect,
                     self.results_manager_avg_error_window_size, self.system_coordinator_initial_dataset_size,
                     self.system_coordinator_initial_dataset_size, self.system_coordinator_drift_scenario)
 
@@ -92,7 +96,11 @@ class SystemCoordinator:
 
         self.ensemble = ens.ModelEnsmeble()
 
-        self.detector = dd.DriftDetector(sys_params.detector_window_size)
+        self.detector = dd.DriftDetector(
+            sys_params.detector_window_size,
+            sys_params.detector_diff_threshold_to_sum,
+            sys_params.detector_diff_sum_threshold_to_detect)
+
         self.adaptor = da.DriftAdaptor(self.ensemble, sys_params.adaptor_submodel_type)
 
         self.results_manager = rman.ResultsManager(sys_params.results_manager_avg_error_window_size)
