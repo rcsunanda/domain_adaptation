@@ -2,14 +2,14 @@
 SystemParameters and SystemCoordinator classes
 """
 
-import domain_adaptation.data_point as dp
-import domain_adaptation.ann_submodel as ann_sm
+import numpy as np
 
 import domain_adaptation.process as prc
 import domain_adaptation.model_ensemble as ens
 import domain_adaptation.drift_detector as dd
 import domain_adaptation.drift_adaptor as da
 import domain_adaptation.results_manager as rman
+import domain_adaptation.data_point as data_point
 
 
 ###################################################################################################
@@ -88,12 +88,6 @@ SystemCoordinator holds objects of important classes of the system, emulates a n
 class SystemCoordinator:
     def __init__(self, sys_params):
 
-        self.process = prc.Process(
-            sys_params.process_num_dimensions,
-            sys_params.process_num_classes,
-            sys_params.process_class_distribution_parameters)
-
-
         self.ensemble = ens.ModelEnsmeble()
 
         self.detector = dd.DriftDetector(
@@ -113,12 +107,15 @@ class SystemCoordinator:
 
         # Parameters specific to scenarios
 
+        create_process = True   # For artificial datasets
+
         if (self.drift_scenario == "Abrupt_Drift"):
             self.process_class_distribution_parameters_2 = sys_params.process_class_distribution_parameters_2
             self.was_drift_occured = False  # To ensure we set the second set of process parameters only once
             self.midpoint = (self.total_sequence_size + self.initial_dataset_size) / 2
 
             self.set_process_parameters = self.set_abrupt_drift_process_params
+            self.generate_data_batch = self.generate_artificial_data_batch
 
         elif (self.drift_scenario == "Gradual_Drift"):
             self.midpoint = (self.total_sequence_size + self.initial_dataset_size) / 2
@@ -133,7 +130,7 @@ class SystemCoordinator:
             self.is_right_printed = False
 
             self.set_process_parameters = self.set_gradual_drift_process_params
-
+            self.generate_data_batch = self.generate_artificial_data_batch
 
         elif (self.drift_scenario == "Recurring_Context"):
             self.process_class_distribution_parameters = sys_params.process_class_distribution_parameters
@@ -146,17 +143,57 @@ class SystemCoordinator:
             self.next_switch_point = self.between_switch_size
 
             self.set_process_parameters = self.set_recurring_context_process_params
+            self.generate_data_batch = self.generate_artificial_data_batch
+
+        elif (self.drift_scenario == "Real_World_Dataset"):
+            self.real_data_points = []
+            self.curr_real_dataset_pos = 0
+            self.load_real_dataset(sys_params.system_coordinator_real_dataset_filename)
+
+            self.set_process_parameters = self.set_real_dataset_params
+            self.generate_data_batch = self.generate_real_data_batch
+
+            create_process = False
 
         else:
             assert False
 
+        self.process = None
+        if (create_process == True):
+            self.process = prc.Process(
+                sys_params.process_num_dimensions,
+                sys_params.process_num_classes,
+                sys_params.process_class_distribution_parameters)
 
     def __repr__(self):
         return "SystemCoordinator(\n\tprocess={} \n\tensemble={} \n\tdetector={} \n\tadaptor={} \n\tresults_manager={} \n)"\
             .format(self.process, self.ensemble, self.detector, self.adaptor, self.results_manager)
 
 
-    # Following 3 functions set time varying process parameters given the current seq no
+    def load_real_dataset(self, filename):
+        dataset = np.genfromtxt(filename, delimiter=',', dtype=None)
+
+        for example in dataset:
+            X = [example[i] for i in (0,1,4,6,7)]   # Only these 5 features are important
+            X[1] = X[1]/7   # Normalize day of week feature to [0,1]
+            label = example[8]
+            if (label == b'UP'):
+                y = 0
+            elif (label == b'DOWN'):
+                y = 1
+            else:
+                assert False
+
+            point = data_point.DataPoint(X, y, -1)
+            self.real_data_points.append(point)
+
+        pass
+
+        # for i in range(10):
+        #     print("data_point={}".format(self.data_points[i]))
+
+
+    # Following 4 functions set time varying process parameters given the current seq no
 
     def set_abrupt_drift_process_params(self, seq):
         if (self.was_drift_occured == False and seq >= self.midpoint):
@@ -202,20 +239,41 @@ class SystemCoordinator:
             self.next_switch_point += self.between_switch_size
 
 
+    def set_real_dataset_params(self, seq): # No parameters to set
+        pass
+
+
+    # Following 2 functions are for generating data (for artificial and real world datasets)
+
+    def generate_artificial_data_batch(self, count):
+        return self.process.generate_data_points_from_all_labels(total_count=count)
+
+    def generate_real_data_batch(self, count):
+        start = self.curr_real_dataset_pos
+        end = start + count
+        self.curr_real_dataset_pos = end
+        return self.real_data_points[start: end]
+
+
     # Generate an initial training dataset, train a submodel, and add it to the ensemble
     def train_initial_model(self):
 
-        initial_training_dataset = self.process.generate_data_points_from_all_labels(self.initial_dataset_size)
+        initial_training_dataset = self.generate_data_batch(self.initial_dataset_size)
 
         self.adaptor.adapt_ensemble(initial_training_dataset)
 
-        # Generate some test data and check initial_model results (generate in small batches, otherwise results in class imbalance)
+        # Generate some test data and check initial_model results
 
-        test_data = []
-        num_batches = int(self.initial_dataset_size / self.batch_size)
-        for i in range(num_batches):
-            batch = self.process.generate_data_points_from_all_labels(self.batch_size)
-            test_data.extend(batch)
+        if (self.drift_scenario == "Real_World_Dataset"):
+            test_data = self.generate_data_batch(self.initial_dataset_size)
+
+        else:   # Artificial dataset
+            # Generate in small batches, otherwise results in class imbalance
+            test_data = []
+            num_batches = int(self.initial_dataset_size / self.batch_size)
+            for i in range(num_batches):
+                batch = self.process.generate_data_points_from_all_labels(self.batch_size)
+                test_data.extend(batch)
 
         self.ensemble.predict(test_data)
         self.detector.add_data_points(test_data)    # So the detector can use this data for diff calculation
@@ -241,7 +299,7 @@ class SystemCoordinator:
         detection_counter = 0
 
         while(True):
-            batch = self.process.generate_data_points_from_all_labels(total_count=self.batch_size)
+            batch = self.generate_data_batch(self.batch_size)
             seq_num += self.batch_size
 
             info_print_counter += self.batch_size
@@ -264,8 +322,7 @@ class SystemCoordinator:
                 if (is_drift_detected == True):
                     latest_window = self.detector.get_latest_window()
                     self.adaptor.adapt_ensemble(latest_window)
-                    # print("Drift detected: adapted ensemble: submodel_count={} \nensemble={}"
-                    #       .format(len(self.ensemble.submodels), self.ensemble))
+                    print("Drift detected: adapted ensemble: submodel_count={}".format(len(self.ensemble.submodels)))
 
             self.set_process_parameters(seq_num)
 

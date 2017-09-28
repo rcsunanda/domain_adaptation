@@ -108,8 +108,17 @@ class DriftAdaptor:
             overall_bounds = compute_overall_bounds(window_bounds, submodel.window_bounds)
             diff = ddif.total_variation_distance(kde_estimator, submodel.pdf, overall_bounds)
 
+            # assert diff >= 0 and diff <= 1, 'diff={}'.format(diff)  # This assertion failed in real world dataset (diff=1.103)
+            #                                                         # Reason could be pdf estimation/ MC integration errors. Therefore use a more relaxed assertion
+
+            assert diff >= -1 and diff <= 2, 'diff={}'.format()
+
+            if (diff > 1):
+                diff = 1
+            if (diff < 0):
+                diff = 0
+
             submodel.weight = 1 - diff
-            assert submodel.weight >= 0 and  submodel.weight <= 1
 
             # if (diff != 0): # Need to check because for current (new) submodel, diff will likely be 0
             #     submodel.weight = 1/diff

@@ -96,7 +96,7 @@ class ResultsManager:
         last_window_avg_error = 'NA'
 
         if (len(self.window_error_count_seq) > 0):
-            last_window_error_count = self.window_error_count_seq[-1]
+            last_window_error_count = self.window_error_count_seq[-1][1]
             last_window_avg_error = self.window_avg_error_seq[-1][1]*100
 
         avg_error_since_last_detection = 'NA'

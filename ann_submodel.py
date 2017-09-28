@@ -18,8 +18,14 @@ class ANN_Submodel(sm.Submodel):
 
         sm.Submodel.__init__(self, weight, pdf)
 
-        self.classfier = ann.MLPClassifier(solver='lbfgs', alpha=1e-5,
-                                           hidden_layer_sizes=(5, 4, 3), random_state=1)
+        # Following works well for artificial data ~ 1 - 4 % error
+        # self.classfier = ann.MLPClassifier(solver='lbfgs', alpha=1e-5,
+        #                                    hidden_layer_sizes=(5, 4, 3), random_state=1)
+
+        # Following is experimentation for real world dataset ~ 36 - 40 % error
+        self.classfier = ann.MLPClassifier(activation='logistic', solver='adam', alpha=1e-4,
+                                           hidden_layer_sizes=(10, 5, 3), learning_rate='adaptive',
+                                           learning_rate_init=0.1, random_state=1)
 
     def __repr__(self):
         base_class_str = sm.Submodel.__repr__(self)

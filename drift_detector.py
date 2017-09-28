@@ -133,9 +133,10 @@ class DriftDetector:
             diff_check_window = smoothed_diff_seq[-diff_check_window_size:]
 
             rising_count = 0
-            for i in range (1, diff_check_window_size):
-                if diff_check_window[i] >= diff_check_window[i-1]:  # Diff value is rising
-                    rising_count += 1
+            if (len(diff_check_window) == diff_check_window_size):  # Because initially, there can be cases where diff_check_window does not have enough elements
+                for i in range (1, diff_check_window_size):
+                    if diff_check_window[i] >= diff_check_window[i-1]:  # Diff value is rising
+                        rising_count += 1
 
             if (rising_count > diff_check_window_size/2):   # Diff values were rising at least half the time during the check window
                 self.drift_detected_seq_nums.append(sequence_size - 1)

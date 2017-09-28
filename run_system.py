@@ -3,6 +3,7 @@ Main script (entry point) of the system
 """
 
 import domain_adaptation.system_coordinator as sys_coord
+import domain_adaptation.real_dataset_manager as real_dat
 
 
 ###################################################################################################
@@ -228,9 +229,49 @@ def run_recurring_context():
 
 
 ###################################################################################################
+"""
+Load the real world dataset and run it with adaptation
+"""
+
+def run_real_dataset_drift_adaptation():
+    print("Setting system parameters...")
+    sys_parameters = sys_coord.SystemParameters()
+
+
+    sys_parameters.adaptor_submodel_type = "ANN_Submodel"
+
+    sys_parameters.detector_window_size = 500
+    sys_parameters.detector_diff_threshold_to_sum = 0.6
+    sys_parameters.detector_diff_sum_threshold_to_detect = 2
+
+    sys_parameters.results_manager_avg_error_window_size = 500
+
+    sys_parameters.system_coordinator_real_dataset_filename = 'datasets/electricity-normalized-stripped.arff'
+
+    sys_parameters.system_coordinator_initial_dataset_size = 10000
+    sys_parameters.system_coordinator_total_sequence_size = 10000
+    sys_parameters.system_coordinator_batch_size = 10
+
+    sys_parameters.system_coordinator_drift_scenario = "Real_World_Dataset"
+
+    print("System parameters are set: \n{}".format(sys_parameters))
+
+    # Create and run SystemCoordinator
+
+    sys_coordinator = sys_coord.SystemCoordinator(sys_parameters)
+
+    print("Starting system... \n{}".format(sys_coordinator))
+
+    sys_coordinator.run()
+
+    print("Run finished. Exiting system...")
+
+
+###################################################################################################
 
 # Call main functions
 
-run_abrupt_drift()
+# run_abrupt_drift()
 # run_gradual_drift()
 # run_recurring_context()
+run_real_dataset_drift_adaptation()
