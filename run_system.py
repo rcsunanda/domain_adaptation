@@ -3,7 +3,6 @@ Main script (entry point) of the system
 """
 
 import domain_adaptation.system_coordinator as sys_coord
-import domain_adaptation.real_dataset_manager as real_dat
 
 
 ###################################################################################################
@@ -64,7 +63,7 @@ def run_abrupt_drift():
     sys_parameters.results_manager_avg_error_window_size = 50
 
     sys_parameters.system_coordinator_initial_dataset_size = 1000
-    sys_parameters.system_coordinator_total_sequence_size = 4000
+    sys_parameters.system_coordinator_total_sequence_size = 4000    # 4000
     sys_parameters.system_coordinator_batch_size = 10
 
     sys_parameters.system_coordinator_drift_scenario = "Abrupt_Drift"
@@ -272,6 +271,6 @@ def run_real_dataset_drift_adaptation():
 # Call main functions
 
 # run_abrupt_drift()
-# run_gradual_drift()
+run_gradual_drift()
 # run_recurring_context()
-run_real_dataset_drift_adaptation()
+# run_real_dataset_drift_adaptation()

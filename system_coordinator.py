@@ -10,6 +10,7 @@ import domain_adaptation.drift_detector as dd
 import domain_adaptation.drift_adaptor as da
 import domain_adaptation.results_manager as rman
 import domain_adaptation.data_point as data_point
+import domain_adaptation.ann_submodel as ann_sm
 
 
 ###################################################################################################
@@ -88,6 +89,8 @@ SystemCoordinator holds objects of important classes of the system, emulates a n
 class SystemCoordinator:
     def __init__(self, sys_params):
 
+        self.original_model = da.create_submodel(sys_params.adaptor_submodel_type)  # To track online error rate for baseline
+
         self.ensemble = ens.ModelEnsmeble()
 
         self.detector = dd.DriftDetector(
@@ -98,6 +101,7 @@ class SystemCoordinator:
         self.adaptor = da.DriftAdaptor(self.ensemble, sys_params.adaptor_submodel_type)
 
         self.results_manager = rman.ResultsManager(sys_params.results_manager_avg_error_window_size)
+        self.results_manager.init_baseline(baseline_name="no_adaptation", baseline_num=0)
 
         self.initial_dataset_size = sys_params.system_coordinator_initial_dataset_size
         self.total_sequence_size = sys_params.system_coordinator_total_sequence_size
@@ -260,6 +264,8 @@ class SystemCoordinator:
 
         initial_training_dataset = self.generate_data_batch(self.initial_dataset_size)
 
+        self.original_model.train(initial_training_dataset) # Baseline
+
         self.adaptor.adapt_ensemble(initial_training_dataset)
 
         # Generate some test data and check initial_model results
@@ -283,6 +289,10 @@ class SystemCoordinator:
         self.results_manager.add_prediction_result(len(test_data), test_data)   # First set of results added to results manager
         self.results_manager.print_results()
 
+        # Predict using original_model and add results
+        self.original_model.predict(test_data)
+        self.results_manager.add_baseline_prediction_result(0, len(test_data), test_data)
+
 
     def run(self):
         self.train_initial_model()
@@ -291,6 +301,8 @@ class SystemCoordinator:
         info_print_interval = 2000
         progress_print_interval = 100
         detection_batch_size = 20
+
+        total_count_todo = self.total_sequence_size + self.initial_dataset_size
 
         seq_num = len(self.detector.data_point_sequence)    # Because a result set was added in train_initial_model
 
@@ -306,13 +318,16 @@ class SystemCoordinator:
             progress_print_counter += self.batch_size
             detection_counter += self.batch_size
 
-            if (seq_num > (self.total_sequence_size + self.initial_dataset_size)):
+            if (seq_num >= total_count_todo):
                 break
 
             self.ensemble.predict(batch)
-
             self.results_manager.add_prediction_result(seq_num, batch)
             self.detector.add_data_points(batch)
+
+            # Predict using original model and add results
+            self.original_model.predict(batch)
+            self.results_manager.add_baseline_prediction_result(0, seq_num, batch)
 
             if (detection_counter >= detection_batch_size):  # Run detection after a certain no. of samples has been added
                 detection_counter = 0
@@ -332,7 +347,7 @@ class SystemCoordinator:
 
             if (progress_print_counter >= progress_print_interval):
                 progress_print_counter = 0
-                print("seq_num={}".format(seq_num))
+                print("seq_num={}/{}".format(seq_num, total_count_todo))
 
         print(self.detector)
         self.results_manager.plot_results()

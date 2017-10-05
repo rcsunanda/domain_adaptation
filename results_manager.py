@@ -13,6 +13,18 @@ def running_mean(x, N):
 
 ###################################################################################################
 """
+Class to hold error information (for a baseline)
+"""
+class ErrorInfo:
+    def __init__(self, baseline_name):
+        self.baseline_name = baseline_name
+        self.total_error_count = 0
+        self.errors_in_window = 0
+        self.window_avg_error_seq = []
+        self.window_sample_count = 0
+
+###################################################################################################
+"""
 ResultsManager collects results-related information as the data sequence and algorithms progress
 It can then be called to print/ plot the collected results
 """
@@ -37,9 +49,14 @@ class ResultsManager:
         self.window_sample_count = 0    # No. of samples in current windows
         self.errors_in_window = 0
 
+        self.baseline_error_info = []   # List of ErrorInfo
+
     def __repr__(self):
         return "ResultsManager()"
 
+    def init_baseline(self, baseline_name, baseline_num):
+        assert baseline_num == len(self.baseline_error_info)    # Baselines can only be added in order 0, 1 ...
+        self.baseline_error_info.append(ErrorInfo(baseline_name))
 
     def add_prediction_result(self, seq_num, data_point_batch):
 
@@ -61,7 +78,6 @@ class ResultsManager:
 
 
             if (self.window_sample_count == self.window_size):
-
                 self.window_error_count_seq.append((seq, self.errors_in_window))
 
                 avg_error = self.errors_in_window / self.window_size
@@ -70,6 +86,28 @@ class ResultsManager:
                 self.window_sample_count = 0
                 self.errors_in_window = 0
 
+
+    def add_baseline_prediction_result(self, baseline_num, seq_num, data_point_batch):
+
+        batch_start_seq = seq_num - len(data_point_batch) + 1
+        error_info = self.baseline_error_info[baseline_num]
+
+        for index, data_point in enumerate(data_point_batch):
+
+            seq = batch_start_seq + index
+
+            error_info.window_sample_count += 1
+
+            if (data_point.predicted_y != data_point.true_y):
+                error_info.errors_in_window += 1
+                error_info.total_error_count += 1
+
+            if (error_info.window_sample_count == self.window_size):
+                avg_error = error_info.errors_in_window / self.window_size
+                error_info.window_avg_error_seq.append((seq, avg_error))
+
+                error_info.window_sample_count = 0
+                error_info.errors_in_window = 0
 
 
     def add_detection_info(self, seq_num, diff, diff_sum, is_drift_detected):
@@ -151,6 +189,12 @@ class ResultsManager:
         x = [pair[0] for pair in self.window_avg_error_seq]
         y = [pair[1] for pair in self.window_avg_error_seq]
         plt.plot(x, y, label='window_avg_error_seq')
+
+        # Plots for online average error of baselines
+        for error_info in self.baseline_error_info:
+            x = [pair[0] for pair in error_info.window_avg_error_seq]
+            y = [pair[1] for pair in error_info.window_avg_error_seq]
+            plt.plot(x, y, label=error_info.baseline_name, linestyle='--')
 
         total_avg_error = 0
         if (self.total_sample_count > 0):
