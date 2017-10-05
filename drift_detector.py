@@ -72,12 +72,6 @@ class DriftDetector:
         self.diff_threshold_to_sum = diff_threshold_to_sum
         self.diff_sum_threshold_to_detect = diff_sum_threshold_to_detect
 
-        # self.diff_threshold_to_sum = 0.005  # Parameterize
-        # self.diff_sum_threshold_to_detect = 0.05
-
-        # self.diff_threshold_to_sum = 0.0035  # For gradual drift
-        # self.diff_sum_threshold_to_detect = 0.04    # For gradual drift
-
         #self.current_diff = 0   # may not need to be a memeber
         self.diff_sum = 0
 
@@ -126,7 +120,7 @@ class DriftDetector:
         if (self.diff_sum >= self.diff_sum_threshold_to_detect):
             # Check whether this happened when diff was rising (rather than falling)
 
-            N = 7   # Moving average filter size
+            N = 10   # Moving average filter size
             smoothed_diff_seq = running_mean(self.diff_sequence, N)
 
             diff_check_window_size = 10
@@ -138,7 +132,9 @@ class DriftDetector:
                     if diff_check_window[i] >= diff_check_window[i-1]:  # Diff value is rising
                         rising_count += 1
 
-            if (rising_count > diff_check_window_size/2):   # Diff values were rising at least half the time during the check window
+            self.diff_sum = 0   # Put here for testing:
+
+            if (rising_count > diff_check_window_size*3/4):   # Diff values were rising at least 75% of the time during the check window
                 self.drift_detected_seq_nums.append(sequence_size - 1)
                 self.diff_sum = 0
                 is_drift_detected = True

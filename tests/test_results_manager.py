@@ -21,7 +21,7 @@ def test_results_manager():
 
     data_points = process.generate_data_points(label=0, count=100)
 
-    results_manager = rman.ResultsManager(avg_error_window_size=10)
+    results_manager = rman.ResultsManager(avg_error_window_size=10, title_suffix="Test_scenario")
 
     batch_size = 5
     batch = []

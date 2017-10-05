@@ -89,11 +89,6 @@ SystemCoordinator holds objects of important classes of the system, emulates a n
 class SystemCoordinator:
     def __init__(self, sys_params):
 
-        # Baseline models
-        self.original_model = da.create_submodel(sys_params.adaptor_submodel_type)
-        self.all_data_model = da.create_submodel(sys_params.adaptor_submodel_type)
-        self.all_data = []  # Store all the data points, to be used by "all_data" baseline
-
         self.ensemble = ens.ModelEnsmeble()
 
         self.detector = dd.DriftDetector(
@@ -101,11 +96,13 @@ class SystemCoordinator:
             sys_params.detector_diff_threshold_to_sum,
             sys_params.detector_diff_sum_threshold_to_detect)
 
-        self.adaptor = da.DriftAdaptor(self.ensemble, sys_params.adaptor_submodel_type)
+        self.results_manager = rman.ResultsManager(
+            sys_params.results_manager_avg_error_window_size,
+            sys_params.system_coordinator_drift_scenario)
 
-        self.results_manager = rman.ResultsManager(sys_params.results_manager_avg_error_window_size)
         self.results_manager.init_baseline(baseline_name="no_adaptation", baseline_num=0)
         self.results_manager.init_baseline(baseline_name="all_data", baseline_num=1)
+        self.results_manager.init_baseline(baseline_name="latest_window", baseline_num=2)
 
         self.initial_dataset_size = sys_params.system_coordinator_initial_dataset_size
         self.total_sequence_size = sys_params.system_coordinator_total_sequence_size
@@ -116,6 +113,7 @@ class SystemCoordinator:
         # Parameters specific to scenarios
 
         create_process = True   # For artificial datasets
+        classfier_type = "Artifcial"   # For artificial datasets
 
         if (self.drift_scenario == "Abrupt_Drift"):
             self.process_class_distribution_parameters_2 = sys_params.process_class_distribution_parameters_2
@@ -162,6 +160,7 @@ class SystemCoordinator:
             self.generate_data_batch = self.generate_real_data_batch
 
             create_process = False
+            classfier_type = "Real"
 
         else:
             assert False
@@ -172,6 +171,16 @@ class SystemCoordinator:
                 sys_params.process_num_dimensions,
                 sys_params.process_num_classes,
                 sys_params.process_class_distribution_parameters)
+
+        # Baseline models
+        self.original_model = da.create_submodel(sys_params.adaptor_submodel_type, classfier_type)
+        self.all_data_model = da.create_submodel(sys_params.adaptor_submodel_type, classfier_type)
+        self.latest_window_model = da.create_submodel(sys_params.adaptor_submodel_type, classfier_type)
+        self.all_data = []  # Store all the data points, to be used by "all_data" baseline
+
+        self.adaptor = da.DriftAdaptor(self.ensemble, sys_params.adaptor_submodel_type, classfier_type)
+
+
 
     def __repr__(self):
         return "SystemCoordinator(\n\tprocess={} \n\tensemble={} \n\tdetector={} \n\tadaptor={} \n\tresults_manager={} \n)"\
@@ -208,7 +217,7 @@ class SystemCoordinator:
             print("Abrupt_Drift scenario: changing process parameters to second set: seq={}".format(seq))
             self.process.set_class_distribution_params(self.process_class_distribution_parameters_2)
             print(self.process)
-            self.results_manager.add_special_marker(seq, "drift")
+            self.results_manager.add_special_marker(seq, "actual_drift")
             self.was_drift_occured = True
 
 
@@ -221,12 +230,12 @@ class SystemCoordinator:
             self.process.set_class_distribution_params(self.process.class_distribution_params)
 
         if (seq >= self.drift_start_seq and self.is_left_printed == False):
-            self.results_manager.add_special_marker(seq, "drift_start")
+            self.results_manager.add_special_marker(seq, "actual_drift_start")
             self.is_left_printed = True
             print("Gradual drift started: seq={}, process={}".format(seq, self.process))
 
         if (seq >= self.drift_end_seq and self.is_right_printed == False):
-            self.results_manager.add_special_marker(seq, "drift_end")
+            self.results_manager.add_special_marker(seq, "actual_drift_end")
             self.is_right_printed = True
             print("Gradual drift finished: seq={}, process={}".format(seq, self.process))
 
@@ -234,7 +243,7 @@ class SystemCoordinator:
     def set_recurring_context_process_params(self, seq):
         if (seq >= self.next_switch_point):
             print("Recurring_Context scenario: switching context: seq={}".format(seq))
-            self.results_manager.add_special_marker(seq, "recurrent_drift")
+            self.results_manager.add_special_marker(seq, "actual_drift")
 
             if (self.process.class_distribution_params == self.process_class_distribution_parameters):
                 self.process.set_class_distribution_params(self.process_class_distribution_parameters_2)
@@ -272,6 +281,7 @@ class SystemCoordinator:
         # Baselines
         self.original_model.train(initial_training_dataset)
         self.all_data_model.train(initial_training_dataset)
+        self.latest_window_model.train(initial_training_dataset)
 
         self.adaptor.adapt_ensemble(initial_training_dataset)
 
@@ -303,6 +313,9 @@ class SystemCoordinator:
         self.all_data_model.predict(test_data)
         self.results_manager.add_baseline_prediction_result(1, len(test_data), test_data)
 
+        self.latest_window_model.predict(test_data)
+        self.results_manager.add_baseline_prediction_result(2, len(test_data), test_data)
+
 
     def run(self):
         self.train_initial_model()
@@ -331,18 +344,30 @@ class SystemCoordinator:
             if (seq_num >= total_count_todo):
                 break
 
-            self.ensemble.predict(batch)
-            self.results_manager.add_prediction_result(seq_num, batch)
             self.detector.add_data_points(batch)
 
+
+            # Predict with adapted ensemble and add results
+
+            self.ensemble.predict(batch)
+            self.results_manager.add_prediction_result(seq_num, batch)
+
             # Predict using baselines and add results
+
             self.original_model.predict(batch)
             self.results_manager.add_baseline_prediction_result(0, seq_num, batch)
 
             self.all_data_model.train(self.all_data)
             self.all_data_model.predict(batch)
             self.results_manager.add_baseline_prediction_result(1, seq_num, batch)
+
+            latest_window = self.all_data[-500:]
+            self.latest_window_model.train(latest_window)
+            self.latest_window_model.predict(batch)
+            self.results_manager.add_baseline_prediction_result(2, seq_num, batch)
+
             self.all_data.extend(batch)
+
 
             if (detection_counter >= detection_batch_size):  # Run detection after a certain no. of samples has been added
                 detection_counter = 0
@@ -365,6 +390,8 @@ class SystemCoordinator:
                 print("seq_num={}/{}".format(seq_num, total_count_todo))
 
         print(self.detector)
+        print("--------------------------------------")
+        self.results_manager.print_results()
         self.results_manager.plot_results()
 
 

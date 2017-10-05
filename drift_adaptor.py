@@ -14,12 +14,12 @@ Create a Submodel of appropriate type (eg: ANN_Submodel)
 Note: This should be done with a factory pattern. Doing it with a simple function for convenience
 """
 
-def create_submodel(submodel_type):
+def create_submodel(submodel_type, classifer_type):
 
     submodel = None
 
     if (submodel_type == "ANN_Submodel"):
-        submodel = ann_sm.ANN_Submodel(weight=1, pdf=None)
+        submodel = ann_sm.ANN_Submodel(weight=1, pdf=None, classifer_type=classifer_type)
     else:
         assert False
 
@@ -74,9 +74,10 @@ DriftAdaptor adapts a ModelEnsemble to drift by doing the following 2 actions
 """
 
 class DriftAdaptor:
-    def __init__(self, ensemble, submodel_type):
+    def __init__(self, ensemble, submodel_type, classifer_type):
         self.ensemble = ensemble
         self.submodel_type = submodel_type
+        self.classifer_type = classifer_type
 
     def __repr__(self):
         return "DriftAdaptor(\n\tensemble={} \n)".format(self.ensemble)
@@ -88,7 +89,7 @@ class DriftAdaptor:
 
 
     def train_new_submodel(self, data_point_window):
-        new_submodel = create_submodel(self.submodel_type)
+        new_submodel = create_submodel(self.submodel_type, self.classifer_type)
         new_submodel.train(data_point_window)
 
         window_samples = [point.X for point in data_point_window]

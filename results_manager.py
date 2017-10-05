@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+###################################################################################################
+"""
+Moving average filter
+"""
 def running_mean(x, N):
     cumsum = np.cumsum(np.insert(x, 0, 0))
     return (cumsum[N:] - cumsum[:-N]) / N
@@ -13,8 +17,26 @@ def running_mean(x, N):
 
 ###################################################################################################
 """
+Combine multiple legend entries to one
+"""
+def combine_duplicate_legends():
+    handles, labels = plt.gca().get_legend_handles_labels()
+    i = 1
+    while i < len(labels):
+        if labels[i] in labels[:i]:
+            del (labels[i])
+            del (handles[i])
+        else:
+            i += 1
+
+    plt.legend(handles, labels, loc='upper left')
+
+
+###################################################################################################
+"""
 Class to hold error information (for a baseline)
 """
+
 class ErrorInfo:
     def __init__(self, baseline_name):
         self.baseline_name = baseline_name
@@ -30,7 +52,9 @@ It can then be called to print/ plot the collected results
 """
 
 class ResultsManager:
-    def __init__(self, avg_error_window_size):
+    def __init__(self, avg_error_window_size, title_suffix):
+        self.title_suffix = title_suffix
+
         self.window_error_count_seq = []
         self.window_avg_error_seq = []
         self.detection_points_seq = []  # Sequence numbers when a drift was detected (is a 1/0 seq more suitable for this)
@@ -135,79 +159,104 @@ class ResultsManager:
 
         if (len(self.window_error_count_seq) > 0):
             last_window_error_count = self.window_error_count_seq[-1][1]
-            last_window_avg_error = self.window_avg_error_seq[-1][1]*100
+            last_window_avg_error = self.window_avg_error_seq[-1][1]
 
         avg_error_since_last_detection = 'NA'
         if (self.sample_count_since_last_detection > 0):
-            avg_error_since_last_detection = self.error_count_since_last_detection*100 / self.sample_count_since_last_detection
+            avg_error_since_last_detection = self.error_count_since_last_detection / self.sample_count_since_last_detection
 
         total_avg_error = 0
         if (self.total_sample_count > 0):
-         total_avg_error = self.total_error_count*100 / self.total_sample_count
+         total_avg_error = self.total_error_count / self.total_sample_count
 
         print("current_seq={}, last_window_error_count={}, error_count_since_last_detection={}, total_error_count={}".
                 format(self.current_seq, last_window_error_count, self.error_count_since_last_detection, self.total_error_count))
 
 
-        print("current_seq={}, last_window_avg_error={}%, avg_error_since_last_detection={}%, total_avg_error={}%".
+        print("current_seq={}, last_window_avg_error={}, avg_error_since_last_detection={}, total_avg_error={}".
               format(self.current_seq, last_window_avg_error, avg_error_since_last_detection, total_avg_error))
 
         # print("window_error_count_seq={}".format(self.window_error_count_seq))
         # print("window_avg_error_seq={}".format(self.window_avg_error_seq))
         print("detection_points_seq={}".format(self.detection_points_seq))
 
+        for error_info in self.baseline_error_info:
+            total_baseline_avg_error = error_info.total_error_count / self.total_sample_count
+            print("baseline={}, total_error_count={}, total_avg_error={}".
+                  format(error_info.baseline_name, error_info.total_error_count, total_baseline_avg_error))
+
 
     def plot_results(self):
+
+        # Plot 1
+
         plt.figure(1)
 
+        # Concept drift map (total variation drift)
         x = [pair[0] for pair in self.diff_seq]
         y = [pair[1] for pair in self.diff_seq]
-        plt.plot(x, y, label='diff_seq')
+        plt.plot(x, y, label='total_variation_distance')
 
-        # Smoothed diff seq
-        N = 7
-        x = [pair[0] for pair in self.diff_seq]
-        x = x[N-1:]
-        y = [pair[1] for pair in self.diff_seq]
-        y = running_mean(y, N)
-        plt.plot(x, y, label='smoothed_diff_seq')
+        # # Smoothed diff seq
+        # N = 7
+        # x = [pair[0] for pair in self.diff_seq]
+        # x = x[N-1:]
+        # y = [pair[1] for pair in self.diff_seq]
+        # y = running_mean(y, N)
+        # plt.plot(x, y, label='smoothed_diff_seq')
 
-        x = [pair[0] for pair in self.diff_sum_seq]
-        y = [pair[1] for pair in self.diff_sum_seq]
-        plt.plot(x, y, label='diff_sum_seq')
+        # # Diff sum seq
+        # x = [pair[0] for pair in self.diff_sum_seq]
+        # y = [pair[1] for pair in self.diff_sum_seq]
+        # plt.plot(x, y, label='diff_sum_seq')
 
+        # Drift detection points vertical lines
         for x in self.detection_points_seq:
-            plt.axvline(x, color='c', linestyle='--', linewidth=0.5)
+            plt.axvline(x, label='drift_detected', color='k', linestyle='--', linewidth=0.5)
 
+        # Special marker vertical lines
         for pair in self.special_marker_seq:
             plt.axvline(pair[0], color='r', linewidth=2, label=pair[1])
 
-        plt.legend(loc='upper right')
+        combine_duplicate_legends()
+        plt.title("Concept drift map: " + self.title_suffix)
+        plt.xlabel("no_of_samples")
+        plt.ylabel("difference_measure")
+
+
+        # Plot 2
 
         plt.figure(2)
 
+        # Online error rate of our adaptation algorithm
         x = [pair[0] for pair in self.window_avg_error_seq]
         y = [pair[1] for pair in self.window_avg_error_seq]
-        plt.plot(x, y, label='window_avg_error_seq')
+        plt.plot(x, y, label='with_adaptation')
 
-        # Plots for online average error of baselines
+        # Plots for online error rate of baselines
         for error_info in self.baseline_error_info:
-            x = [pair[0] for pair in error_info.window_avg_error_seq]
-            y = [pair[1] for pair in error_info.window_avg_error_seq]
-            plt.plot(x, y, label=error_info.baseline_name, linestyle='--')
+            if (len(error_info.window_avg_error_seq) > 0):
+                x = [pair[0] for pair in error_info.window_avg_error_seq]
+                y = [pair[1] for pair in error_info.window_avg_error_seq]
+                plt.plot(x, y, label=error_info.baseline_name, linestyle='--')
 
-        total_avg_error = 0
-        if (self.total_sample_count > 0):
-            total_avg_error = self.total_error_count / self.total_sample_count
+        # Average error horizontal line
+        # if (self.total_sample_count > 0):
+        #     total_avg_error = self.total_error_count / self.total_sample_count
+        #     plt.axhline(total_avg_error, label='total_avg_error', color='k', linestyle='--', linewidth=0.5)
 
-        plt.axhline(total_avg_error, label='total_avg_error', color='k', linestyle='--', linewidth=0.5)
-
+        # Drift detection points vertical lines
         for x in self.detection_points_seq:
-            plt.axvline(x, color='c', linestyle='--', linewidth=0.5)
+            plt.axvline(x, label='drift_detected', color='k', linestyle='--', linewidth=0.5)
 
+        # Special marker vertical lines
         for pair in self.special_marker_seq:
-            plt.axvline(pair[0], color='r', linewidth=2, label=pair[1])
+            plt.axvline(pair[0], color='#550000ff', linewidth=2, label=pair[1])
 
-        plt.legend(loc='upper right')
+        combine_duplicate_legends()
+        plt.title("Error rate: " + self.title_suffix)
+        plt.xlabel("no_of_samples")
+        plt.ylabel("error_rate")
+
         plt.show()
 

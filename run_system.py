@@ -119,7 +119,7 @@ def run_gradual_drift():
     sys_parameters.adaptor_submodel_type = "ANN_Submodel"
 
     sys_parameters.detector_window_size = 500
-    sys_parameters.detector_diff_threshold_to_sum = 0.0035
+    sys_parameters.detector_diff_threshold_to_sum = 0.0025  # 0.0030
     sys_parameters.detector_diff_sum_threshold_to_detect = 0.04
 
     sys_parameters.results_manager_avg_error_window_size = 50
@@ -240,7 +240,7 @@ def run_real_dataset_drift_adaptation():
     sys_parameters.adaptor_submodel_type = "ANN_Submodel"
 
     sys_parameters.detector_window_size = 500
-    sys_parameters.detector_diff_threshold_to_sum = 0.6
+    sys_parameters.detector_diff_threshold_to_sum = 0.8
     sys_parameters.detector_diff_sum_threshold_to_detect = 2
 
     sys_parameters.results_manager_avg_error_window_size = 500
@@ -270,7 +270,7 @@ def run_real_dataset_drift_adaptation():
 
 # Call main functions
 
-run_abrupt_drift()
+# run_abrupt_drift()
 # run_gradual_drift()
 # run_recurring_context()
-# run_real_dataset_drift_adaptation()
+run_real_dataset_drift_adaptation()
