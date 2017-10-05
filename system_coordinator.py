@@ -89,7 +89,10 @@ SystemCoordinator holds objects of important classes of the system, emulates a n
 class SystemCoordinator:
     def __init__(self, sys_params):
 
-        self.original_model = da.create_submodel(sys_params.adaptor_submodel_type)  # To track online error rate for baseline
+        # Baseline models
+        self.original_model = da.create_submodel(sys_params.adaptor_submodel_type)
+        self.all_data_model = da.create_submodel(sys_params.adaptor_submodel_type)
+        self.all_data = []  # Store all the data points, to be used by "all_data" baseline
 
         self.ensemble = ens.ModelEnsmeble()
 
@@ -102,6 +105,7 @@ class SystemCoordinator:
 
         self.results_manager = rman.ResultsManager(sys_params.results_manager_avg_error_window_size)
         self.results_manager.init_baseline(baseline_name="no_adaptation", baseline_num=0)
+        self.results_manager.init_baseline(baseline_name="all_data", baseline_num=1)
 
         self.initial_dataset_size = sys_params.system_coordinator_initial_dataset_size
         self.total_sequence_size = sys_params.system_coordinator_total_sequence_size
@@ -263,8 +267,11 @@ class SystemCoordinator:
     def train_initial_model(self):
 
         initial_training_dataset = self.generate_data_batch(self.initial_dataset_size)
+        self.all_data.extend(initial_training_dataset)
 
-        self.original_model.train(initial_training_dataset) # Baseline
+        # Baselines
+        self.original_model.train(initial_training_dataset)
+        self.all_data_model.train(initial_training_dataset)
 
         self.adaptor.adapt_ensemble(initial_training_dataset)
 
@@ -292,6 +299,9 @@ class SystemCoordinator:
         # Predict using original_model and add results
         self.original_model.predict(test_data)
         self.results_manager.add_baseline_prediction_result(0, len(test_data), test_data)
+
+        self.all_data_model.predict(test_data)
+        self.results_manager.add_baseline_prediction_result(1, len(test_data), test_data)
 
 
     def run(self):
@@ -325,9 +335,14 @@ class SystemCoordinator:
             self.results_manager.add_prediction_result(seq_num, batch)
             self.detector.add_data_points(batch)
 
-            # Predict using original model and add results
+            # Predict using baselines and add results
             self.original_model.predict(batch)
             self.results_manager.add_baseline_prediction_result(0, seq_num, batch)
+
+            self.all_data_model.train(self.all_data)
+            self.all_data_model.predict(batch)
+            self.results_manager.add_baseline_prediction_result(1, seq_num, batch)
+            self.all_data.extend(batch)
 
             if (detection_counter >= detection_batch_size):  # Run detection after a certain no. of samples has been added
                 detection_counter = 0

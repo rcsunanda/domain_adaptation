@@ -270,7 +270,7 @@ def run_real_dataset_drift_adaptation():
 
 # Call main functions
 
-# run_abrupt_drift()
-run_gradual_drift()
+run_abrupt_drift()
+# run_gradual_drift()
 # run_recurring_context()
 # run_real_dataset_drift_adaptation()
