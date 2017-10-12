@@ -113,7 +113,7 @@ class SystemCoordinator:
         # Parameters specific to scenarios
 
         create_process = True   # For artificial datasets
-        classfier_type = "Artifcial"   # For artificial datasets
+        classfier_type = "Artificial"   # For artificial datasets
 
         if (self.drift_scenario == "Abrupt_Drift"):
             self.process_class_distribution_parameters_2 = sys_params.process_class_distribution_parameters_2

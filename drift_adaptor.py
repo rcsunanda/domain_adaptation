@@ -4,6 +4,7 @@ DriftAdaptor class
 
 import domain_adaptation.distribution_difference as ddif
 import domain_adaptation.ann_submodel as ann_sm
+import domain_adaptation.decision_tree_submodel as tree_sm
 
 import numpy as np
 
@@ -20,6 +21,8 @@ def create_submodel(submodel_type, classifer_type):
 
     if (submodel_type == "ANN_Submodel"):
         submodel = ann_sm.ANN_Submodel(weight=1, pdf=None, classifer_type=classifer_type)
+    elif (submodel_type == "DecisionTreeSubmodel"):
+        submodel = tree_sm.DecisionTreeSubmodel(weight=1, pdf=None, classifer_type=classifer_type)
     else:
         assert False
 

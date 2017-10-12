@@ -3,6 +3,7 @@ Tests for Submodel, ANN_Submodel and other derived classes
 """
 
 import domain_adaptation.ann_submodel as ann_sm
+import domain_adaptation.decision_tree_submodel as tree_sm
 import domain_adaptation.model_ensemble as ens
 import domain_adaptation.process as prc
 
@@ -39,7 +40,7 @@ Then predict on some test data generated from Process, and report error percent
 
 def test_ann_submodel_training():
 
-    ann_submodel = ann_sm.ANN_Submodel(weight=1, pdf=None)
+    ann_submodel = ann_sm.ANN_Submodel(weight=1, pdf=None, classifer_type="Artificial")
     print(ann_submodel)
 
 
@@ -71,6 +72,48 @@ def test_ann_submodel_training():
     # Test ANN_Submodel and report results
     predict_and_print_results(ann_submodel, test_data, "test_ann_submodel_training")
 
+
+
+###################################################################################################
+"""
+Test the training and predicting of an DecisionTreeSubmodel
+Train the DecisionTreeSubmodel on some training data generated from Process
+Then predict on some test data generated from Process, and report error percent
+"""
+
+def test_tree_submodel_training():
+
+    tree_submodel = tree_sm.DecisionTreeSubmodel(weight=1, pdf=None, classifer_type="Artificial")
+    print(tree_submodel)
+
+
+    # Generate some data from a 2 class stochastic process (for training and testing)
+
+    # Setup process
+
+    gauss_params = []
+    # class 1 Gaussian distribution params
+    mean_1 = [0, 0]
+    cov_1 = [[1, 0], [0, 1]]
+    # class 2 Gaussian distribution params
+    mean_2 = [3, 3]
+    cov_2 = [[1, 0], [0, 1]]
+
+    gauss_params.append((mean_1, cov_1))
+    gauss_params.append((mean_2, cov_2))
+
+    process = prc.Process(num_dimensions=2, num_classes=2, class_distribution_parameters=gauss_params)
+    print(process)
+
+    # Generate training and test data
+    training_data = process.generate_data_points_from_all_labels(total_count=1000)
+    test_data = process.generate_data_points_from_all_labels(total_count=1000)
+
+    # Train ANN_Submodel
+    tree_submodel.train(training_data)
+
+    # Test ANN_Submodel and report results
+    predict_and_print_results(tree_submodel, test_data, "test_tree_submodel_training")
 
 
 
@@ -138,4 +181,5 @@ def test_ensemble_prediction():
 # Call test functions
 
 # test_ann_submodel_training()
-test_ensemble_prediction()
+test_tree_submodel_training()
+# test_ensemble_prediction()

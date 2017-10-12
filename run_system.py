@@ -10,7 +10,7 @@ import domain_adaptation.system_coordinator as sys_coord
 Set system parameters and run it with Abrupt_Drift scenario
 """
 
-def run_abrupt_drift():
+def run_abrupt_drift(submodel_type):
 
     print("Setting system parameters...")
     sys_parameters = sys_coord.SystemParameters()
@@ -54,7 +54,7 @@ def run_abrupt_drift():
 
     # Other parameters
 
-    sys_parameters.adaptor_submodel_type = "ANN_Submodel"
+    sys_parameters.adaptor_submodel_type = submodel_type
 
     sys_parameters.detector_window_size = 500
     sys_parameters.detector_diff_threshold_to_sum = 0.005
@@ -89,7 +89,7 @@ def run_abrupt_drift():
 Set system parameters and run it with Gradual_Drift scenario
 """
 
-def run_gradual_drift():
+def run_gradual_drift(submodel_type):
 
     print("Setting system parameters...")
     sys_parameters = sys_coord.SystemParameters()
@@ -116,7 +116,7 @@ def run_gradual_drift():
 
     # Other parameters
 
-    sys_parameters.adaptor_submodel_type = "ANN_Submodel"
+    sys_parameters.adaptor_submodel_type = submodel_type
 
     sys_parameters.detector_window_size = 500
     sys_parameters.detector_diff_threshold_to_sum = 0.0025  # 0.0030
@@ -153,7 +153,7 @@ def run_gradual_drift():
 Set system parameters and run it with Abrupt_Drift scenario
 """
 
-def run_recurring_context():
+def run_recurring_context(submodel_type):
 
     print("Setting system parameters...")
     sys_parameters = sys_coord.SystemParameters()
@@ -197,7 +197,7 @@ def run_recurring_context():
 
     # Other parameters
 
-    sys_parameters.adaptor_submodel_type = "ANN_Submodel"
+    sys_parameters.adaptor_submodel_type = submodel_type
 
     sys_parameters.detector_window_size = 500
     sys_parameters.detector_diff_threshold_to_sum = 0.005
@@ -232,12 +232,12 @@ def run_recurring_context():
 Load the real world dataset and run it with adaptation
 """
 
-def run_real_dataset_drift_adaptation():
+def run_real_dataset_drift_adaptation(submodel_type):
     print("Setting system parameters...")
     sys_parameters = sys_coord.SystemParameters()
 
 
-    sys_parameters.adaptor_submodel_type = "ANN_Submodel"
+    sys_parameters.adaptor_submodel_type = submodel_type
 
     sys_parameters.detector_window_size = 500
     sys_parameters.detector_diff_threshold_to_sum = 0.8
@@ -270,7 +270,13 @@ def run_real_dataset_drift_adaptation():
 
 # Call main functions
 
-# run_abrupt_drift()
-# run_gradual_drift()
-# run_recurring_context()
-run_real_dataset_drift_adaptation()
+# run_abrupt_drift("ANN_Submodel")
+# run_gradual_drift("ANN_Submodel")
+# run_recurring_context("ANN_Submodel")
+# run_real_dataset_drift_adaptation("ANN_Submodel")
+
+
+# run_abrupt_drift("DecisionTreeSubmodel")
+# run_gradual_drift("DecisionTreeSubmodel")
+# run_recurring_context("DecisionTreeSubmodel")
+run_real_dataset_drift_adaptation("DecisionTreeSubmodel")
