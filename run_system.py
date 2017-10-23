@@ -278,5 +278,5 @@ def run_real_dataset_drift_adaptation(submodel_type):
 
 # run_abrupt_drift("DecisionTreeSubmodel")
 # run_gradual_drift("DecisionTreeSubmodel")
-# run_recurring_context("DecisionTreeSubmodel")
-run_real_dataset_drift_adaptation("DecisionTreeSubmodel")
+run_recurring_context("DecisionTreeSubmodel")
+# run_real_dataset_drift_adaptation("DecisionTreeSubmodel")
